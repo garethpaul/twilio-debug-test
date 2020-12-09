@@ -56,3 +56,10 @@ Twilio.setLoggerConfiguration("path/to/log4j2.xml");
     </Loggers>
 </Configuration>
 ```
+
+## C#
+[link](https://github.com/twilio/twilio-csharp)
+
+```
+TwilioClient.SetLogLevel("debug");
+```
