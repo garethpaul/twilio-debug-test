@@ -13,8 +13,10 @@ var promise = client.messages.create({
     from: from,
     to: to,
     body: 'create using promises'
-  });
-  promise.then(function(message) {
+});
+
+// After Sending Message Get the Message Sid
+promise.then(function(message) {
     console.log('Created message using promises');
     console.log(message.sid);
-  });
+ });
