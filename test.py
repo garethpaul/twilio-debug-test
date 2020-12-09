@@ -12,8 +12,8 @@ class CompanyComms:
         #logging.basicConfig()
         #client.http_client.logger.setLevel(logging.INFO)
 
-        message = client.messages.create(to=to_number,
-                                        from_=from_number,
+        message = client.messages.create(to=os.getenv('TWILIO_TO'),
+                                        from_=os.getenv('TWILIO_FROM'),
                                         body=body)
         return message
 
