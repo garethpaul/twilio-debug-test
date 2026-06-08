@@ -4,7 +4,7 @@ PYTHON ?= python3
 NODE ?= node
 
 lint:
-	$(PYTHON) -m py_compile test.py tests/test_company_comms.py
+	$(PYTHON) -m py_compile test.py tests/test_company_comms.py tests/test_docs_plans.py
 	$(NODE) --check test.js
 	$(NODE) --check tests/test_js_contracts.js
 

@@ -49,6 +49,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
+- Completed maintenance plans live under `docs/plans` and are checked by
+  `make check`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

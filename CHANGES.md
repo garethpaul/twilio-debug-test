@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Added canonical `docs/plans` coverage to the Python test suite.
 - Normalized Twilio sample environment settings before validation so
   whitespace-padded values do not leak into dry-run output or live-send setup.
 - Added Python and Node.js tests for trimmed settings, blank message bodies,
