@@ -19,6 +19,7 @@ Priority:
 - Avoid logging secrets, auth headers, or full customer payloads
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
+- Normalize required settings before validation and redaction
 
 Next priorities:
 

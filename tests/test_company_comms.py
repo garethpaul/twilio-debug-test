@@ -43,6 +43,31 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(result["from"], "*****5555")
         self.assertEqual(result["body_length"], 13)
 
+    def test_message_settings_are_trimmed_before_dry_run(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_TO": "  to-4567  ",
+            "TWILIO_FROM": "  from-4321  ",
+            "TWILIO_BODY": "  hello  ",
+        })
+
+        result = comms.send_msg()
+
+        self.assertEqual(result["to"], "***4567")
+        self.assertEqual(result["from"], "*****4321")
+        self.assertEqual(result["body_length"], 5)
+
+    def test_blank_message_body_is_missing(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_TO": "to-4567",
+            "TWILIO_FROM": "from-4321",
+            "TWILIO_BODY": "   ",
+        })
+
+        with self.assertRaisesRegex(ValueError, "body"):
+            comms.send_msg()
+
     def test_live_send_requires_credentials_before_importing_twilio(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
@@ -54,6 +79,11 @@ class CompanyCommsTest(unittest.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN"):
             comms.sendMsg(None, None, None)
+
+    def test_live_send_flag_allows_surrounding_whitespace(self):
+        sample = load_sample()
+
+        self.assertTrue(sample.should_send_live({"TWILIO_SEND_LIVE": " TRUE "}))
 
 
 if __name__ == "__main__":

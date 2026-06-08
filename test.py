@@ -24,7 +24,7 @@ class CompanyComms:
 
         missing = [
             name for name in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN")
-            if not self.env.get(name)
+            if not setting_value(self.env.get(name))
         ]
         if missing:
             raise RuntimeError(
@@ -37,8 +37,8 @@ class CompanyComms:
             client_factory = Client
 
         client = client_factory(
-            self.env.get("TWILIO_ACCOUNT_SID"),
-            self.env.get("TWILIO_AUTH_TOKEN"),
+            setting_value(self.env.get("TWILIO_ACCOUNT_SID")),
+            setting_value(self.env.get("TWILIO_AUTH_TOKEN")),
         )
         client.http_client.logger.setLevel(logging.INFO)
 
@@ -50,9 +50,15 @@ class CompanyComms:
 
     def _message_payload(self, to_number=None, from_number=None, body=None):
         payload = {
-            "to": to_number or self.env.get("TWILIO_TO"),
-            "from": from_number or self.env.get("TWILIO_FROM"),
-            "body": body or self.env.get("TWILIO_BODY"),
+            "to": (
+                setting_value(to_number) or setting_value(self.env.get("TWILIO_TO"))
+            ),
+            "from": (
+                setting_value(from_number) or setting_value(self.env.get("TWILIO_FROM"))
+            ),
+            "body": (
+                setting_value(body) or setting_value(self.env.get("TWILIO_BODY"))
+            ),
         }
         missing = [key for key, value in payload.items() if not value]
         if missing:
@@ -64,13 +70,19 @@ class CompanyComms:
 
 def should_send_live(env=None):
     env = env if env is not None else os.environ
-    return env.get("TWILIO_SEND_LIVE", "").lower() == "true"
+    return setting_value(env.get("TWILIO_SEND_LIVE", "")).lower() == "true"
+
+
+def setting_value(value):
+    if value is None:
+        return ""
+    return str(value).strip()
 
 
 def redact_phone(value):
+    value = setting_value(value)
     if not value:
         return ""
-    value = str(value)
     if len(value) <= 4:
         return "****"
     return ("*" * (len(value) - 4)) + value[-4:]

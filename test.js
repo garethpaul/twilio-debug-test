@@ -1,21 +1,28 @@
 function required(env, name) {
-  const value = env[name];
+  const value = settingValue(env[name]);
   if (!value) {
     throw new Error('Missing required Twilio setting: ' + name);
   }
   return value;
 }
 
+function settingValue(value) {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return String(value).trim();
+}
+
 function shouldSendLive(env) {
   env = env || process.env;
-  return String(env.TWILIO_SEND_LIVE || '').toLowerCase() === 'true';
+  return settingValue(env.TWILIO_SEND_LIVE).toLowerCase() === 'true';
 }
 
 function redactPhone(value) {
+  value = settingValue(value);
   if (!value) {
     return '';
   }
-  value = String(value);
   if (value.length <= 4) {
     return '****';
   }

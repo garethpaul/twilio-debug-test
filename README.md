@@ -40,7 +40,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Running or Using the Project
 
 - Run `make check` to check the Python and Node.js samples.
-- Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either sample. Both samples dry-run by default and only send a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
+- Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
+  sample. Both samples trim required settings, dry-run by default, and only send
+  a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
 
 ## Testing and Verification
 
