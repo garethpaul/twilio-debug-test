@@ -39,7 +39,7 @@ Debug logs can expose account credentials, phone numbers, URLs, and message
 content. Examples should favor redaction, environment variables, and mock paths
 before live sends.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Checked-in credentials or phone numbers
 - Logs containing auth headers or customer payloads
