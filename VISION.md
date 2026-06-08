@@ -45,3 +45,6 @@ before live sends.
 - Logs containing auth headers or customer payloads
 - Live-send defaults without clear opt-in
 - Debug settings that persist beyond the sample
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
