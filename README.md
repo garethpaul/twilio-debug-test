@@ -39,12 +39,12 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
-- Run `make verify` to check the Python and Node.js samples.
+- Run `make check` to check the Python and Node.js samples.
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either sample. Both samples dry-run by default and only send a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
 
 ## Testing and Verification
 
-- `make verify`
+- `make check`
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
 
