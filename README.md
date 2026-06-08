@@ -1,5 +1,8 @@
 # twilio-debug-test
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 ## Overview
 
 `garethpaul/twilio-debug-test` is a public sample, documentation, or utility project. Debug Demo
@@ -67,4 +70,3 @@ Keep changes small and tied to the project that is already present in this repos
 Prior README summary:
 
 > TWILIO HELPER LIB DEBUGGING <!-- README-OVERVIEW-IMAGE --> Below are examples in each language Python [link](https://github.com/twilio/twilio-python) NodeJS [link](https://github.com/twilio/twilio-node) Ruby
-
