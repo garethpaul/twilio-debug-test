@@ -18,11 +18,12 @@ Priority:
 - Keep Twilio credentials in environment variables
 - Avoid logging secrets, auth headers, or full customer payloads
 - Treat live message sending as an explicit opt-in action
+- Keep default sample execution in dry-run mode
 
 Next priorities:
 
-- Add a dry-run mode or mocked send examples
-- Replace hardcoded phone-number arguments with environment-only values
+- Add mocked Twilio client examples for local live-send development
+- Add language-specific dependency manifests
 - Add setup notes for each language sample
 - Document how to redact logs before sharing them
 
