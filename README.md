@@ -69,4 +69,4 @@ Keep changes small and tied to the project that is already present in this repos
 
 Prior README summary:
 
-> TWILIO HELPER LIB DEBUGGING <!-- README-OVERVIEW-IMAGE --> Below are examples in each language Python [link](https://github.com/twilio/twilio-python) NodeJS [link](https://github.com/twilio/twilio-node) Ruby
+> TWILIO HELPER LIB DEBUGGING Below are examples in each language Python [link](https://github.com/twilio/twilio-python) NodeJS [link](https://github.com/twilio/twilio-node) Ruby
