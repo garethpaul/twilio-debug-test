@@ -64,9 +64,3 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Contributing
 
 Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
-
-## Existing Project Notes
-
-Prior README summary:
-
-> TWILIO HELPER LIB DEBUGGING Below are examples in each language Python [link](https://github.com/twilio/twilio-python) NodeJS [link](https://github.com/twilio/twilio-node) Ruby
