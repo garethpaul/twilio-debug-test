@@ -39,7 +39,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Debug logs can expose account credentials, phone numbers, URLs, and message
 content. Examples should favor redaction, environment variables, and mock paths
 before live sends.
