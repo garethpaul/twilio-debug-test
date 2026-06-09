@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Made the Python sample entry point return a non-zero exit code with a concise
+  stderr validation message instead of a traceback for expected setup errors.
+- Added Python test coverage for traceback-free CLI validation failures.
 - Normalized Node.js `TWILIO_LOG_LEVEL=warning` to Twilio's `warn` log level.
 - Added a Node.js contract assertion for the warning alias.
 

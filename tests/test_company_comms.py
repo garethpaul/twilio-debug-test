@@ -1,7 +1,10 @@
 import importlib.util
+import io
 import logging
 from pathlib import Path
+from contextlib import redirect_stderr
 import unittest
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "test.py"
@@ -157,6 +160,18 @@ class CompanyCommsTest(unittest.TestCase):
             sample.twilio_log_level({"TWILIO_LOG_LEVEL": "silent"}),
             logging.CRITICAL + 10,
         )
+
+    def test_main_reports_validation_errors_without_traceback(self):
+        sample = load_sample()
+        stderr = io.StringIO()
+
+        with mock.patch.dict(sample.os.environ, {}, clear=True):
+            with redirect_stderr(stderr):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Missing required Twilio message settings", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
 
 
 if __name__ == "__main__":

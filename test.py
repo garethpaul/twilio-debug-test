@@ -1,5 +1,6 @@
 import os
 import logging
+import sys
 
 TWILIO_LOG_LEVELS = {
     "debug": logging.DEBUG,
@@ -108,7 +109,12 @@ def redact_phone(value):
 
 
 def main():
-    result = CompanyComms().send_msg()
+    try:
+        result = CompanyComms().send_msg()
+    except (RuntimeError, ValueError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
+
     if isinstance(result, dict) and result.get("dry_run"):
         print(
             "Dry run message: to={to} from={from} body_length={body_length}".format(
@@ -117,7 +123,8 @@ def main():
         )
     else:
         print("Created message: {}".format(getattr(result, "sid", "<unknown>")))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -20,6 +20,7 @@ Priority:
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
+- Report expected sample setup errors without tracebacks
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 

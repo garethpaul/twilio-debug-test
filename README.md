@@ -43,6 +43,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
+- The Python sample reports expected configuration errors as concise stderr
+  messages and exits non-zero instead of printing tracebacks.
 - Node.js and Python live sends default to `info` logging; set
   `TWILIO_LOG_LEVEL=debug` only when you are ready to redact and review debug
   output before sharing it. The Node.js sample accepts `warning` as an alias
@@ -77,6 +79,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   live-send log-level opt-in coverage.
 - See `docs/plans/2026-06-09-node-warning-log-level.md` for Node.js
   `warning` log-level alias coverage.
+- See `docs/plans/2026-06-09-python-cli-errors.md` for Python CLI validation
+  error handling coverage.
 
 ## Contributing
 
