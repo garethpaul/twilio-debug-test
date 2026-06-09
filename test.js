@@ -21,10 +21,15 @@ function shouldSendLive(env) {
 function twilioLogLevel(env) {
   env = env || process.env;
   const value = settingValue(env.TWILIO_LOG_LEVEL).toLowerCase();
-  if (['debug', 'info', 'warn', 'error', 'silent'].indexOf(value) !== -1) {
-    return value;
-  }
-  return 'info';
+  const supportedLevels = {
+    debug: 'debug',
+    info: 'info',
+    warn: 'warn',
+    warning: 'warn',
+    error: 'error',
+    silent: 'silent'
+  };
+  return supportedLevels[value] || 'info';
 }
 
 function redactPhone(value) {

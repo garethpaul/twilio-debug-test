@@ -45,7 +45,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
 - Node.js and Python live sends default to `info` logging; set
   `TWILIO_LOG_LEVEL=debug` only when you are ready to redact and review debug
-  output before sharing it.
+  output before sharing it. The Node.js sample accepts `warning` as an alias
+  for Twilio's `warn` log level.
 
 ## Testing and Verification
 
@@ -74,6 +75,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-python-log-level-opt-in.md` for Python
   live-send log-level opt-in coverage.
+- See `docs/plans/2026-06-09-node-warning-log-level.md` for Node.js
+  `warning` log-level alias coverage.
 
 ## Contributing
 

@@ -21,6 +21,7 @@ Priority:
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
 - Keep live-send debug logging as an explicit opt-in across language samples
+- Keep language log-level aliases normalized before applying Twilio settings
 
 Next priorities:
 
@@ -52,6 +53,7 @@ before live sends.
 - Logs containing auth headers or customer payloads
 - Live-send defaults without clear opt-in
 - Debug settings that persist beyond the sample
+- Language-specific log-level aliases that silently fall back to another level
 
 This list is a roadmap guardrail, not a permanent rule.
 Strong user demand and strong technical rationale can change it.

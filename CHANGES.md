@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-09
+
+- Normalized Node.js `TWILIO_LOG_LEVEL=warning` to Twilio's `warn` log level.
+- Added a Node.js contract assertion for the warning alias.
+
 ## 2026-06-08
 
 - Added Python live-send log-level opt-in handling and fake-client tests.
