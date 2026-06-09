@@ -1,4 +1,6 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const sample = require('../test.js');
 
 const env = {
@@ -18,6 +20,13 @@ assert.strictEqual(sample.redactPhone('to-4567'), '***4567');
 assert.strictEqual(sample.shouldSendLive({ TWILIO_SEND_LIVE: 'true' }), true);
 assert.strictEqual(sample.shouldSendLive({ TWILIO_SEND_LIVE: ' TRUE ' }), true);
 assert.strictEqual(sample.shouldSendLive({ TWILIO_SEND_LIVE: 'false' }), false);
+assert.strictEqual(sample.twilioLogLevel({}), 'info');
+assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' DEBUG ' }), 'debug');
+assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: 'noisy' }), 'info');
+assert.ok(
+  fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
+    .includes('client.logLevel = twilioLogLevel(env);')
+);
 assert.throws(
   () => sample.createMessagePayload({ TWILIO_TO: 'to-4567' }),
   /TWILIO_FROM/

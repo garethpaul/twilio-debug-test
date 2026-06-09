@@ -43,12 +43,16 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
+- Node.js live sends default to `info` logging; set `TWILIO_LOG_LEVEL=debug`
+  only when you are ready to redact and review debug output before sharing it.
 
 ## Testing and Verification
 
 - `make check`
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
+- Node.js tests keep live-send logging at `info` unless `TWILIO_LOG_LEVEL`
+  explicitly opts into a supported level.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 

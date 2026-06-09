@@ -18,6 +18,15 @@ function shouldSendLive(env) {
   return settingValue(env.TWILIO_SEND_LIVE).toLowerCase() === 'true';
 }
 
+function twilioLogLevel(env) {
+  env = env || process.env;
+  const value = settingValue(env.TWILIO_LOG_LEVEL).toLowerCase();
+  if (['debug', 'info', 'warn', 'error', 'silent'].indexOf(value) !== -1) {
+    return value;
+  }
+  return 'info';
+}
+
 function redactPhone(value) {
   value = settingValue(value);
   if (!value) {
@@ -56,7 +65,7 @@ async function sendMessage(env) {
   const accountSid = required(env, 'TWILIO_ACCOUNT_SID');
   const authToken = required(env, 'TWILIO_AUTH_TOKEN');
   const client = require('twilio')(accountSid, authToken);
-  client.logLevel = env.TWILIO_LOG_LEVEL || 'debug';
+  client.logLevel = twilioLogLevel(env);
 
   const message = await client.messages.create(payload);
   console.log('Created message using promises');
@@ -75,5 +84,6 @@ module.exports = {
   createMessagePayload,
   redactPhone,
   sendMessage,
-  shouldSendLive
+  shouldSendLive,
+  twilioLogLevel
 };

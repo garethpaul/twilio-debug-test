@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Changed the Node.js live-send log level default from `debug` to `info`, while
+  preserving explicit `TWILIO_LOG_LEVEL=debug` opt-in coverage.
 - Added canonical `docs/plans` coverage to the Python test suite.
 - Normalized Twilio sample environment settings before validation so
   whitespace-padded values do not leak into dry-run output or live-send setup.

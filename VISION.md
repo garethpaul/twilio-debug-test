@@ -20,13 +20,14 @@ Priority:
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
+- Keep live-send debug logging as an explicit Node.js opt-in
 
 Next priorities:
 
 - Add mocked Twilio client examples for local live-send development
 - Add language-specific dependency manifests
 - Add setup notes for each language sample
-- Document how to redact logs before sharing them
+- Add deeper redaction examples for shared debug logs
 
 Contribution rules:
 
