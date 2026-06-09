@@ -6,6 +6,12 @@ function required(env, name) {
   return value;
 }
 
+function missingSettings(env, names) {
+  return names.filter(function(name) {
+    return !settingValue(env[name]);
+  });
+}
+
 function settingValue(value) {
   if (value === undefined || value === null) {
     return '';
@@ -67,8 +73,18 @@ async function sendMessage(env, clientFactory) {
     return result;
   }
 
-  const accountSid = required(env, 'TWILIO_ACCOUNT_SID');
-  const authToken = required(env, 'TWILIO_AUTH_TOKEN');
+  const missingCredentials = missingSettings(env, [
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN'
+  ]);
+  if (missingCredentials.length) {
+    throw new Error(
+      'Missing required Twilio credentials: ' + missingCredentials.join(', ')
+    );
+  }
+
+  const accountSid = settingValue(env.TWILIO_ACCOUNT_SID);
+  const authToken = settingValue(env.TWILIO_AUTH_TOKEN);
   const createClient = clientFactory || require('twilio');
   const client = createClient(accountSid, authToken);
   client.logLevel = twilioLogLevel(env);

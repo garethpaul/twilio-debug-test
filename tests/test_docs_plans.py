@@ -5,6 +5,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_PLANS = ROOT / "docs" / "plans"
 CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-twilio-debug-test-baseline.md"
+NODE_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-node-credential-errors.md"
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -12,6 +13,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertTrue(DOCS_PLANS.is_dir(), "docs/plans must exist")
         plans = sorted(DOCS_PLANS.glob("*.md"))
         self.assertIn(CANONICAL_PLAN, plans)
+        self.assertIn(NODE_CREDENTIAL_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")

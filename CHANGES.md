@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Reported all missing Node.js live-send credential names before importing or
+  constructing a Twilio client.
+- Added Node.js CLI coverage for combined missing-credential errors.
 - Added a testable Node.js CLI runner that returns exit codes and reports
   expected validation errors without stack traces.
 - Added an injectable Node.js Twilio client factory for mocked live-send tests.

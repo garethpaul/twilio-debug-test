@@ -99,6 +99,21 @@ sample.sendMessage(env).then((result) => {
       assert.deepStrictEqual(cliErrors, [
         'Missing required Twilio setting: TWILIO_FROM'
       ]);
+
+      const credentialErrors = [];
+      return sample.runCli({
+        TWILIO_SEND_LIVE: 'true',
+        TWILIO_FROM: 'from-4321',
+        TWILIO_TO: 'to-4567',
+        TWILIO_BODY: 'live body'
+      }, function(message) {
+        credentialErrors.push(message);
+      }).then((credentialExitCode) => {
+        assert.strictEqual(credentialExitCode, 1);
+        assert.deepStrictEqual(credentialErrors, [
+          'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+        ]);
+      });
     });
   });
 }).catch((error) => {
