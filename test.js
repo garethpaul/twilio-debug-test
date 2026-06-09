@@ -52,7 +52,7 @@ function createMessagePayload(env) {
   };
 }
 
-async function sendMessage(env) {
+async function sendMessage(env, clientFactory) {
   env = env || process.env;
   const payload = createMessagePayload(env);
 
@@ -69,7 +69,8 @@ async function sendMessage(env) {
 
   const accountSid = required(env, 'TWILIO_ACCOUNT_SID');
   const authToken = required(env, 'TWILIO_AUTH_TOKEN');
-  const client = require('twilio')(accountSid, authToken);
+  const createClient = clientFactory || require('twilio');
+  const client = createClient(accountSid, authToken);
   client.logLevel = twilioLogLevel(env);
 
   const message = await client.messages.create(payload);

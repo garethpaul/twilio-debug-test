@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Added an injectable Node.js Twilio client factory for mocked live-send tests.
+- Added Node.js fake-client coverage for live-send payloads and default log
+  level assignment.
 - Made the Python sample entry point return a non-zero exit code with a concise
   stderr validation message instead of a traceback for expected setup errors.
 - Added Python test coverage for traceback-free CLI validation failures.

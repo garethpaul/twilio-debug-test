@@ -23,10 +23,10 @@ Priority:
 - Report expected sample setup errors without tracebacks
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
+- Keep live-send paths testable with mocked clients
 
 Next priorities:
 
-- Add mocked Twilio client examples for local live-send development
 - Add language-specific dependency manifests
 - Add setup notes for each language sample
 - Add deeper redaction examples for shared debug logs
