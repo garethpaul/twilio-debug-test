@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Reported all missing Node.js message setting names together for dry-run and
+  live-send setup validation.
+- Added Node.js CLI coverage for combined missing message-setting errors.
 - Reported all missing Node.js live-send credential names before importing or
   constructing a Twilio client.
 - Added Node.js CLI coverage for combined missing-credential errors.

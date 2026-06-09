@@ -31,7 +31,7 @@ assert.ok(
 );
 assert.throws(
   () => sample.createMessagePayload({ TWILIO_TO: 'to-4567' }),
-  /TWILIO_FROM/
+  /Missing required Twilio message settings: TWILIO_FROM, TWILIO_BODY/
 );
 assert.throws(
   () => sample.createMessagePayload({
@@ -97,7 +97,7 @@ sample.sendMessage(env).then((result) => {
     }).then((exitCode) => {
       assert.strictEqual(exitCode, 1);
       assert.deepStrictEqual(cliErrors, [
-        'Missing required Twilio setting: TWILIO_FROM'
+        'Missing required Twilio message settings: TWILIO_FROM, TWILIO_TO, TWILIO_BODY'
       ]);
 
       const credentialErrors = [];

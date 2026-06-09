@@ -47,6 +47,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   messages and exits non-zero instead of printing tracebacks.
 - The Node.js sample exposes a testable CLI runner that reports expected
   configuration errors as concise messages and exits non-zero.
+- The Node.js message payload path reports all missing message setting names
+  together before a dry run or live send.
 - The Node.js live-send path reports all missing Twilio credential names before
   importing or constructing a Twilio client.
 - The Node.js sample accepts an optional client factory for mocked live-send
@@ -65,7 +67,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `TWILIO_LOG_LEVEL` explicitly opts into a supported level.
 - Node.js tests cover the live-send payload and log-level assignment with a
   fake Twilio client factory. They also cover concise CLI validation errors
-  through the exported runner, including combined missing-credential reporting.
+  through the exported runner, including combined missing message-setting and
+  credential reporting.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 
@@ -96,6 +99,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   error coverage.
 - See `docs/plans/2026-06-09-node-credential-errors.md` for Node.js live-send
   credential validation coverage.
+- See `docs/plans/2026-06-09-node-message-setting-errors.md` for Node.js
+  message setting validation coverage.
 
 ## Contributing
 

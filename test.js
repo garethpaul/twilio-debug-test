@@ -1,11 +1,3 @@
-function required(env, name) {
-  const value = settingValue(env[name]);
-  if (!value) {
-    throw new Error('Missing required Twilio setting: ' + name);
-  }
-  return value;
-}
-
 function missingSettings(env, names) {
   return names.filter(function(name) {
     return !settingValue(env[name]);
@@ -51,10 +43,21 @@ function redactPhone(value) {
 
 function createMessagePayload(env) {
   env = env || process.env;
+  const missingMessageSettings = missingSettings(env, [
+    'TWILIO_FROM',
+    'TWILIO_TO',
+    'TWILIO_BODY'
+  ]);
+  if (missingMessageSettings.length) {
+    throw new Error(
+      'Missing required Twilio message settings: ' + missingMessageSettings.join(', ')
+    );
+  }
+
   return {
-    from: required(env, 'TWILIO_FROM'),
-    to: required(env, 'TWILIO_TO'),
-    body: required(env, 'TWILIO_BODY')
+    from: settingValue(env.TWILIO_FROM),
+    to: settingValue(env.TWILIO_TO),
+    body: settingValue(env.TWILIO_BODY)
   };
 }
 

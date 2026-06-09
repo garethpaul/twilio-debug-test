@@ -22,6 +22,7 @@ Priority:
 - Normalize required settings before validation and redaction
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
+- Report missing Node.js message settings together before sample send setup
 - Report missing Twilio live-send credentials together before client setup
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
