@@ -12,6 +12,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 ## Repository Contents
 
 - `README.md` - project overview and local usage notes
+- `scripts/check-baseline.sh` - repository maintenance baseline guard
 - `SECURITY.md` - security reporting and disclosure guidance
 - `VISION.md` - project direction and maintenance guardrails
 
@@ -61,8 +62,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make check`
+- `scripts/check-baseline.sh`
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
+- The baseline script checks required project files, completed docs-plan
+  metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
   `TWILIO_LOG_LEVEL` explicitly opts into a supported level.
 - Node.js tests cover the live-send payload and log-level assignment with a
@@ -101,6 +105,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   credential validation coverage.
 - See `docs/plans/2026-06-09-node-message-setting-errors.md` for Node.js
   message setting validation coverage.
+- See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
+  repository baseline guard and editor metadata ignore coverage.
 
 ## Contributing
 

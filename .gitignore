@@ -2,3 +2,7 @@ __pycache__/
 *.py[cod]
 node_modules/
 .env
+
+.idea/
+.vscode/
+*.iml

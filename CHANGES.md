@@ -4,6 +4,9 @@
 
 - Reported all missing Node.js message setting names together for dry-run and
   live-send setup validation.
+- Added `scripts/check-baseline.sh` to keep required files, completed plan
+  metadata, verification docs, and editor metadata hygiene wired into
+  `make check`.
 - Added Node.js CLI coverage for combined missing message-setting errors.
 - Reported all missing Node.js live-send credential names before importing or
   constructing a Twilio client.
