@@ -20,6 +20,7 @@ Priority:
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
+- Bound sample message bodies before dry-run output or live send setup
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
 - Keep a scriptable baseline guard for required files and maintenance metadata
@@ -57,6 +58,7 @@ before live sends.
 - Checked-in credentials or phone numbers
 - Logs containing auth headers or customer payloads
 - Live-send defaults without clear opt-in
+- Unbounded message bodies in debug-send samples
 - Debug settings that persist beyond the sample
 - Language-specific log-level aliases that silently fall back to another level
 

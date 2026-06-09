@@ -25,6 +25,7 @@ assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' DEBUG ' }), 'debu
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' WARNING ' }), 'warn');
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: 'noisy' }), 'info');
 assert.strictEqual(typeof sample.runCli, 'function');
+assert.strictEqual(sample.MAX_MESSAGE_BODY_LENGTH, 1600);
 assert.ok(
   fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
     .includes('client.logLevel = twilioLogLevel(env);')
@@ -40,6 +41,14 @@ assert.throws(
     TWILIO_BODY: '   '
   }),
   /TWILIO_BODY/
+);
+assert.throws(
+  () => sample.createMessagePayload({
+    TWILIO_FROM: 'from-4321',
+    TWILIO_TO: 'to-4567',
+    TWILIO_BODY: 'x'.repeat(sample.MAX_MESSAGE_BODY_LENGTH + 1)
+  }),
+  /1600 characters/
 );
 assert.deepStrictEqual(sample.createMessagePayload({
   TWILIO_FROM: '  from-4321  ',

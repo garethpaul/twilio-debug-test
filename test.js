@@ -1,3 +1,5 @@
+const MAX_MESSAGE_BODY_LENGTH = 1600;
+
 function missingSettings(env, names) {
   return names.filter(function(name) {
     return !settingValue(env[name]);
@@ -54,11 +56,17 @@ function createMessagePayload(env) {
     );
   }
 
-  return {
+  const payload = {
     from: settingValue(env.TWILIO_FROM),
     to: settingValue(env.TWILIO_TO),
     body: settingValue(env.TWILIO_BODY)
   };
+  if (payload.body.length > MAX_MESSAGE_BODY_LENGTH) {
+    throw new Error(
+      'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH + ' characters or fewer.'
+    );
+  }
+  return payload;
 }
 
 async function sendMessage(env, clientFactory) {
@@ -119,6 +127,7 @@ if (require.main === module) {
 
 module.exports = {
   createMessagePayload,
+  MAX_MESSAGE_BODY_LENGTH,
   redactPhone,
   runCli,
   sendMessage,

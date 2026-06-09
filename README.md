@@ -44,6 +44,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
+  Message bodies are limited to 1600 characters in both samples.
 - The Python sample reports expected configuration errors as concise stderr
   messages and exits non-zero instead of printing tracebacks.
 - The Node.js sample exposes a testable CLI runner that reports expected
@@ -72,7 +73,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Node.js tests cover the live-send payload and log-level assignment with a
   fake Twilio client factory. They also cover concise CLI validation errors
   through the exported runner, including combined missing message-setting and
-  credential reporting.
+  credential reporting. Python and Node.js tests also require oversized message
+  bodies to fail before dry-run output or live Twilio client setup.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 
@@ -107,6 +109,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   message setting validation coverage.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard and editor metadata ignore coverage.
+- See `docs/plans/2026-06-09-message-body-length.md` for the shared message
+  body length guard.
 
 ## Contributing
 

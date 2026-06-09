@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added a shared 1600-character message body limit to Python and Node.js sample
+  payload validation.
 - Reported all missing Node.js message setting names together for dry-run and
   live-send setup validation.
 - Added `scripts/check-baseline.sh` to keep required files, completed plan

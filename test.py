@@ -11,6 +11,7 @@ TWILIO_LOG_LEVELS = {
     "critical": logging.CRITICAL,
     "silent": logging.CRITICAL + 10,
 }
+MAX_MESSAGE_BODY_LENGTH = 1600
 
 
 class CompanyComms:
@@ -76,6 +77,11 @@ class CompanyComms:
         if missing:
             raise ValueError(
                 "Missing required Twilio message settings: " + ", ".join(missing)
+            )
+        if len(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
+            raise ValueError(
+                "Twilio message body must be %d characters or fewer."
+                % MAX_MESSAGE_BODY_LENGTH
             )
         return payload
 

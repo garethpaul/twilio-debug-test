@@ -109,6 +109,17 @@ class CompanyCommsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "body"):
             comms.send_msg()
 
+    def test_oversized_message_body_is_rejected(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_TO": "to-4567",
+            "TWILIO_FROM": "from-4321",
+            "TWILIO_BODY": "x" * (sample.MAX_MESSAGE_BODY_LENGTH + 1),
+        })
+
+        with self.assertRaisesRegex(ValueError, "1600 characters"):
+            comms.send_msg()
+
     def test_live_send_requires_credentials_before_importing_twilio(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
