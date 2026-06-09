@@ -20,7 +20,7 @@ Priority:
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
-- Keep live-send debug logging as an explicit Node.js opt-in
+- Keep live-send debug logging as an explicit opt-in across language samples
 
 Next priorities:
 

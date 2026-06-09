@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Added Python live-send log-level opt-in handling and fake-client tests.
 - Changed the Node.js live-send log level default from `debug` to `info`, while
   preserving explicit `TWILIO_LOG_LEVEL=debug` opt-in coverage.
 - Added canonical `docs/plans` coverage to the Python test suite.

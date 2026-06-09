@@ -1,4 +1,5 @@
 import importlib.util
+import logging
 from pathlib import Path
 import unittest
 
@@ -13,7 +14,44 @@ def load_sample():
     return module
 
 
+class FakeLogger:
+    def __init__(self):
+        self.level = None
+
+    def setLevel(self, level):
+        self.level = level
+
+
+class FakeHttpClient:
+    def __init__(self):
+        self.logger = FakeLogger()
+
+
+class FakeMessages:
+    def __init__(self, client):
+        self.client = client
+        self.payload = None
+
+    def create(self, **payload):
+        self.payload = payload
+        return type("Message", (), {"sid": "SM123"})()
+
+
+class FakeTwilioClient:
+    instances = []
+
+    def __init__(self, account_sid, auth_token):
+        self.account_sid = account_sid
+        self.auth_token = auth_token
+        self.http_client = FakeHttpClient()
+        self.messages = FakeMessages(self)
+        FakeTwilioClient.instances.append(self)
+
+
 class CompanyCommsTest(unittest.TestCase):
+    def setUp(self):
+        FakeTwilioClient.instances = []
+
     def test_dry_run_uses_environment_without_twilio_import(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
@@ -84,6 +122,41 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
 
         self.assertTrue(sample.should_send_live({"TWILIO_SEND_LIVE": " TRUE "}))
+
+    def test_python_live_send_log_level_defaults_to_info(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ACCOUNT_SID": "AC123",
+            "TWILIO_AUTH_TOKEN": "secret",
+            "TWILIO_TO": "to-4567",
+            "TWILIO_FROM": "from-4321",
+            "TWILIO_BODY": "hello",
+        }, client_factory=FakeTwilioClient)
+
+        message = comms.send_msg()
+
+        self.assertEqual(message.sid, "SM123")
+        self.assertEqual(
+            FakeTwilioClient.instances[0].http_client.logger.level,
+            logging.INFO,
+        )
+
+    def test_python_live_send_log_level_requires_supported_opt_in(self):
+        sample = load_sample()
+
+        self.assertEqual(
+            sample.twilio_log_level({"TWILIO_LOG_LEVEL": " DEBUG "}),
+            logging.DEBUG,
+        )
+        self.assertEqual(
+            sample.twilio_log_level({"TWILIO_LOG_LEVEL": "noisy"}),
+            logging.INFO,
+        )
+        self.assertEqual(
+            sample.twilio_log_level({"TWILIO_LOG_LEVEL": "silent"}),
+            logging.CRITICAL + 10,
+        )
 
 
 if __name__ == "__main__":

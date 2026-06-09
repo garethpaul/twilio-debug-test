@@ -1,6 +1,17 @@
 import os
 import logging
 
+TWILIO_LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warn": logging.WARNING,
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+    "critical": logging.CRITICAL,
+    "silent": logging.CRITICAL + 10,
+}
+
+
 class CompanyComms:
 
     def __init__(self, env=None, client_factory=None):
@@ -40,7 +51,7 @@ class CompanyComms:
             setting_value(self.env.get("TWILIO_ACCOUNT_SID")),
             setting_value(self.env.get("TWILIO_AUTH_TOKEN")),
         )
-        client.http_client.logger.setLevel(logging.INFO)
+        client.http_client.logger.setLevel(twilio_log_level(self.env))
 
         return client.messages.create(
             to=payload["to"],
@@ -71,6 +82,14 @@ class CompanyComms:
 def should_send_live(env=None):
     env = env if env is not None else os.environ
     return setting_value(env.get("TWILIO_SEND_LIVE", "")).lower() == "true"
+
+
+def twilio_log_level(env=None):
+    env = env if env is not None else os.environ
+    return TWILIO_LOG_LEVELS.get(
+        setting_value(env.get("TWILIO_LOG_LEVEL", "")).lower(),
+        logging.INFO,
+    )
 
 
 def setting_value(value):
