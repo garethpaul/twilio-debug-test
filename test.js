@@ -79,16 +79,29 @@ async function sendMessage(env, clientFactory) {
   return message;
 }
 
+async function runCli(env, logError) {
+  env = env || process.env;
+  logError = logError || console.error;
+
+  try {
+    await sendMessage(env);
+    return 0;
+  } catch (error) {
+    logError(error.message);
+    return 1;
+  }
+}
+
 if (require.main === module) {
-  sendMessage().catch(function(error) {
-    console.error(error.message);
-    process.exit(1);
+  runCli().then(function(exitCode) {
+    process.exit(exitCode);
   });
 }
 
 module.exports = {
   createMessagePayload,
   redactPhone,
+  runCli,
   sendMessage,
   shouldSendLive,
   twilioLogLevel

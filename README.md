@@ -45,6 +45,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
 - The Python sample reports expected configuration errors as concise stderr
   messages and exits non-zero instead of printing tracebacks.
+- The Node.js sample exposes a testable CLI runner that reports expected
+  configuration errors as concise messages and exits non-zero.
 - The Node.js sample accepts an optional client factory for mocked live-send
   tests without importing the Twilio package.
 - Node.js and Python live sends default to `info` logging; set
@@ -60,7 +62,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Node.js and Python tests keep live-send logging at `info` unless
   `TWILIO_LOG_LEVEL` explicitly opts into a supported level.
 - Node.js tests cover the live-send payload and log-level assignment with a
-  fake Twilio client factory.
+  fake Twilio client factory. They also cover concise CLI validation errors
+  through the exported runner.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 
@@ -87,6 +90,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   error handling coverage.
 - See `docs/plans/2026-06-09-node-client-factory.md` for Node.js mocked
   live-send coverage.
+- See `docs/plans/2026-06-09-node-cli-runner.md` for Node.js CLI validation
+  error coverage.
 
 ## Contributing
 

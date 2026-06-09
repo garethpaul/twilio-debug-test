@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added a testable Node.js CLI runner that returns exit codes and reports
+  expected validation errors without stack traces.
 - Added an injectable Node.js Twilio client factory for mocked live-send tests.
 - Added Node.js fake-client coverage for live-send payloads and default log
   level assignment.

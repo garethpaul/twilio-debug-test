@@ -21,6 +21,7 @@ Priority:
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
 - Report expected sample setup errors without tracebacks
+- Keep CLI validation errors testable across language samples
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients

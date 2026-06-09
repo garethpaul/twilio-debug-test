@@ -24,6 +24,7 @@ assert.strictEqual(sample.twilioLogLevel({}), 'info');
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' DEBUG ' }), 'debug');
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' WARNING ' }), 'warn');
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: 'noisy' }), 'info');
+assert.strictEqual(typeof sample.runCli, 'function');
 assert.ok(
   fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
     .includes('client.logLevel = twilioLogLevel(env);')
@@ -90,6 +91,15 @@ sample.sendMessage(env).then((result) => {
       body: 'live body'
     });
     assert.strictEqual(message.sid, 'SMNODE123');
+    const cliErrors = [];
+    return sample.runCli({}, function(message) {
+      cliErrors.push(message);
+    }).then((exitCode) => {
+      assert.strictEqual(exitCode, 1);
+      assert.deepStrictEqual(cliErrors, [
+        'Missing required Twilio setting: TWILIO_FROM'
+      ]);
+    });
   });
 }).catch((error) => {
   console.error(error);
