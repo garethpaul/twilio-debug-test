@@ -114,11 +114,17 @@ def redact_phone(value):
     return ("*" * (len(value) - 4)) + value[-4:]
 
 
+def cli_error_message(error):
+    if isinstance(error, (RuntimeError, ValueError)):
+        return str(error)
+    return "Twilio request failed."
+
+
 def main():
     try:
         result = CompanyComms().send_msg()
-    except (RuntimeError, ValueError) as error:
-        print(str(error), file=sys.stderr)
+    except Exception as error:
+        print(cli_error_message(error), file=sys.stderr)
         return 1
 
     if isinstance(result, dict) and result.get("dry_run"):
@@ -128,7 +134,11 @@ def main():
             )
         )
     else:
-        print("Created message: {}".format(getattr(result, "sid", "<unknown>")))
+        print(
+            "Created message: {}".format(
+                redact_phone(getattr(result, "sid", "<unknown>"))
+            )
+        )
     return 0
 
 

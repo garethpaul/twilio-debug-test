@@ -2,7 +2,7 @@ import importlib.util
 import io
 import logging
 from pathlib import Path
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 import unittest
 from unittest import mock
 
@@ -183,6 +183,35 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Missing required Twilio message settings", stderr.getvalue())
         self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_main_redacts_created_message_sid(self):
+        sample = load_sample()
+        stdout = io.StringIO()
+        message = type("Message", (), {"sid": "SM1234567890"})()
+
+        with mock.patch.object(sample.CompanyComms, "send_msg", return_value=message):
+            with redirect_stdout(stdout):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("********7890", stdout.getvalue())
+        self.assertNotIn("SM1234567890", stdout.getvalue())
+
+    def test_main_hides_unexpected_provider_error_details(self):
+        sample = load_sample()
+        stderr = io.StringIO()
+
+        with mock.patch.object(
+            sample.CompanyComms,
+            "send_msg",
+            side_effect=Exception("provider response included auth-token-secret"),
+        ):
+            with redirect_stderr(stderr):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(stderr.getvalue(), "Twilio request failed.\n")
+        self.assertNotIn("auth-token-secret", stderr.getvalue())
 
 
 if __name__ == "__main__":

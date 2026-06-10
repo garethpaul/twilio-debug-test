@@ -46,9 +46,14 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
   Message bodies are limited to 1600 characters in both samples.
 - The Python sample reports expected configuration errors as concise stderr
-  messages and exits non-zero instead of printing tracebacks.
+  messages and exits non-zero instead of printing tracebacks. Unexpected Twilio
+  provider errors are replaced with a generic message so diagnostics do not
+  leak credentials or message metadata.
 - The Node.js sample exposes a testable CLI runner that reports expected
-  configuration errors as concise messages and exits non-zero.
+  configuration errors as concise messages and exits non-zero. Its client
+  factory can also be injected through the runner to verify provider failures.
+- Successful live sends return the full Twilio result to callers but print only
+  a redacted Message SID in both command-line samples.
 - The Node.js message payload path reports all missing message setting names
   together before a dry run or live send.
 - The Node.js live-send path reports all missing Twilio credential names before
@@ -67,7 +72,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
 - GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
-  with Node.js 20, 22, and 24 for pushes and pull requests.
+  with Node.js 20, 22, and 24 for pushes and pull requests on Ubuntu 24.04.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
@@ -75,7 +80,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Node.js tests cover the live-send payload and log-level assignment with a
   fake Twilio client factory. They also cover concise CLI validation errors
   through the exported runner, including combined missing message-setting and
-  credential reporting. Python and Node.js tests also require oversized message
+  credential reporting, generic provider-error handling, and resource-ID
+  redaction. Python and Node.js tests also require oversized message
   bodies to fail before dry-run output or live Twilio client setup.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.

@@ -2,6 +2,14 @@
 
 ## 2026-06-10
 
+- Redacted Twilio Message SIDs in Python and Node.js command-line success output
+  while preserving full SDK results for programmatic callers.
+- Added generic handling for unexpected provider errors so CLI stderr cannot
+  expose fake or real credentials, phone numbers, URLs, or message metadata.
+- Extended both runtime test suites with provider-failure and identifier-
+  redaction coverage.
+- Fixed CI to Ubuntu 24.04, upgraded action annotations and setup-node to
+  v6.4.0, scoped concurrency, and made Make targets root-independent.
 - Added a pinned, read-only GitHub Actions matrix covering Python 3.10, 3.12,
   and 3.14 with Node.js 20, 22, and 24.
 - Extended the local baseline and docs-plan tests to protect the hosted CI

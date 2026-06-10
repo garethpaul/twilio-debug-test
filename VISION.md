@@ -29,6 +29,8 @@ Priority:
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients
+- Keep live-send Message SIDs redacted in command-line output
+- Keep unexpected provider diagnostics out of user-facing stderr
 - Keep the Python and Node.js compatibility matrix enforced in hosted CI
 
 Next priorities:
