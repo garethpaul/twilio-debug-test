@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-10
+
+- Added a pinned, read-only GitHub Actions matrix covering Python 3.10, 3.12,
+  and 3.14 with Node.js 20, 22, and 24.
+- Extended the local baseline and docs-plan tests to protect the hosted CI
+  contract.
+
 ## 2026-06-09
 
 - Added a shared 1600-character message body limit to Python and Node.js sample

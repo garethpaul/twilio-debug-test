@@ -17,6 +17,7 @@ require_file() {
 
 for path in \
   ".gitignore" \
+  ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
   "README.md" \
@@ -29,9 +30,37 @@ for path in \
   "tests/test_js_contracts.js" \
   "docs/plans/2026-06-08-twilio-debug-test-baseline.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
+  "docs/plans/2026-06-10-ci-runtime-matrix.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
+
+for workflow_contract in \
+  "permissions:" \
+  "contents: read" \
+  "timeout-minutes: 10" \
+  'python: "3.10"' \
+  'python: "3.12"' \
+  'python: "3.14"' \
+  'node: "20"' \
+  'node: "22"' \
+  'node: "24"' \
+  "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" \
+  "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" \
+  "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444" \
+  "run: make check"; do
+  if ! grep -Fq "$workflow_contract" "$WORKFLOW"; then
+    printf '%s\n' "GitHub Actions workflow is missing required contract: $workflow_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Eq 'uses: [^ ]+@(main|master|v[0-9]+)([[:space:]]|$)' "$WORKFLOW"; then
+  printf '%s\n' "GitHub Actions must be pinned to immutable commit SHAs." >&2
+  exit 1
+fi
 
 if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
