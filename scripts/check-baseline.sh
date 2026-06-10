@@ -32,8 +32,21 @@ for path in \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
   "docs/plans/2026-06-10-ci-runtime-matrix.md" \
   "docs/plans/2026-06-10-cli-output-privacy.md" \
+  "docs/plans/2026-06-10-python-cli-error-allowlist.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for python_privacy_contract in \
+  "class MessageValidationError(ValueError)" \
+  "class CredentialValidationError(RuntimeError)" \
+  "isinstance(error, SAFE_CLI_ERROR_TYPES)" \
+  "test_cli_error_message_hides_unexpected_value_errors"; do
+  if ! grep -Fq -- "$python_privacy_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$python_privacy_contract" "$ROOT_DIR/tests/test_company_comms.py"; then
+    printf '%s\n' "Python CLI privacy contract is missing: $python_privacy_contract" >&2
+    exit 1
+  fi
 done
 
 WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"

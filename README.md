@@ -47,8 +47,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   Message bodies are limited to 1600 characters in both samples.
 - The Python sample reports expected configuration errors as concise stderr
   messages and exits non-zero instead of printing tracebacks. Unexpected Twilio
-  provider errors are replaced with a generic message so diagnostics do not
-  leak credentials or message metadata.
+  provider errors are replaced with a generic message, including provider-raised
+  `RuntimeError` and `ValueError` instances, so diagnostics do not leak
+  credentials or message metadata.
 - The Node.js sample exposes a testable CLI runner that reports expected
   configuration errors as concise messages and exits non-zero. Its client
   factory can also be injected through the runner to verify provider failures.
@@ -107,6 +108,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `warning` log-level alias coverage.
 - See `docs/plans/2026-06-09-python-cli-errors.md` for Python CLI validation
   error handling coverage.
+- See `docs/plans/2026-06-10-python-cli-error-allowlist.md` for Python's
+  sample-owned validation exception allowlist and provider error redaction.
 - See `docs/plans/2026-06-09-node-client-factory.md` for Node.js mocked
   live-send coverage.
 - See `docs/plans/2026-06-09-node-cli-runner.md` for Node.js CLI validation

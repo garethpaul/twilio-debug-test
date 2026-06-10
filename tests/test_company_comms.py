@@ -204,7 +204,7 @@ class CompanyCommsTest(unittest.TestCase):
         with mock.patch.object(
             sample.CompanyComms,
             "send_msg",
-            side_effect=Exception("provider response included auth-token-secret"),
+            side_effect=RuntimeError("provider response included auth-token-secret"),
         ):
             with redirect_stderr(stderr):
                 exit_code = sample.main()
@@ -212,6 +212,16 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertEqual(stderr.getvalue(), "Twilio request failed.\n")
         self.assertNotIn("auth-token-secret", stderr.getvalue())
+
+    def test_cli_error_message_hides_unexpected_value_errors(self):
+        sample = load_sample()
+
+        message = sample.cli_error_message(
+            ValueError("provider response included auth-token-secret")
+        )
+
+        self.assertEqual(message, "Twilio request failed.")
+        self.assertNotIn("auth-token-secret", message)
 
 
 if __name__ == "__main__":

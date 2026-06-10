@@ -31,6 +31,7 @@ Priority:
 - Keep live-send paths testable with mocked clients
 - Keep live-send Message SIDs redacted in command-line output
 - Keep unexpected provider diagnostics out of user-facing stderr
+- Allowlist sample-owned Python validation exceptions instead of broad built-in types
 - Keep the Python and Node.js compatibility matrix enforced in hosted CI
 
 Next priorities:

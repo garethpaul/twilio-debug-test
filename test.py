@@ -14,6 +14,17 @@ TWILIO_LOG_LEVELS = {
 MAX_MESSAGE_BODY_LENGTH = 1600
 
 
+class MessageValidationError(ValueError):
+    pass
+
+
+class CredentialValidationError(RuntimeError):
+    pass
+
+
+SAFE_CLI_ERROR_TYPES = (MessageValidationError, CredentialValidationError)
+
+
 class CompanyComms:
 
     def __init__(self, env=None, client_factory=None):
@@ -40,7 +51,7 @@ class CompanyComms:
             if not setting_value(self.env.get(name))
         ]
         if missing:
-            raise RuntimeError(
+            raise CredentialValidationError(
                 "Missing required Twilio credentials: " + ", ".join(missing)
             )
 
@@ -75,11 +86,11 @@ class CompanyComms:
         }
         missing = [key for key, value in payload.items() if not value]
         if missing:
-            raise ValueError(
+            raise MessageValidationError(
                 "Missing required Twilio message settings: " + ", ".join(missing)
             )
         if len(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
-            raise ValueError(
+            raise MessageValidationError(
                 "Twilio message body must be %d characters or fewer."
                 % MAX_MESSAGE_BODY_LENGTH
             )
@@ -115,7 +126,7 @@ def redact_phone(value):
 
 
 def cli_error_message(error):
-    if isinstance(error, (RuntimeError, ValueError)):
+    if isinstance(error, SAFE_CLI_ERROR_TYPES):
         return str(error)
     return "Twilio request failed."
 

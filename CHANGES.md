@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Allowlisted sample-owned Python validation exceptions so provider-raised
+  built-in `RuntimeError` and `ValueError` details remain redacted.
 - Redacted Twilio Message SIDs in Python and Node.js command-line success output
   while preserving full SDK results for programmatic callers.
 - Added generic handling for unexpected provider errors so CLI stderr cannot
