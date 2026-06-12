@@ -45,10 +45,21 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
   Message bodies are limited to 1600 characters in both samples.
+- Python message arguments fall back to environment settings only when omitted;
+  explicit blank recipients, senders, and bodies fail validation before dry-run
+  output or live client setup.
 - The Python sample reports expected configuration errors as concise stderr
-  messages and exits non-zero instead of printing tracebacks.
+  messages and exits non-zero instead of printing tracebacks. Unexpected Twilio
+  provider errors are replaced with a generic message, including provider-raised
+  `RuntimeError` and `ValueError` instances, so diagnostics do not leak
+  credentials or message metadata.
 - The Node.js sample exposes a testable CLI runner that reports expected
-  configuration errors as concise messages and exits non-zero.
+  configuration errors as concise messages and exits non-zero. Its client
+  factory can also be injected through the runner to verify provider failures.
+- Node.js CLI validation messages are allowlisted by sample-owned error type,
+  not by provider-controlled message prefix.
+- Successful live sends return the full Twilio result to callers but print only
+  a redacted Message SID in both command-line samples.
 - The Node.js message payload path reports all missing message setting names
   together before a dry run or live send.
 - The Node.js live-send path reports all missing Twilio credential names before
@@ -66,8 +77,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `scripts/check-baseline.sh`
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
-- GitHub Actions runs the same `make check` baseline with Python 3.12 and Node
-  20 for pushes and pull requests.
+- GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
+  with Node.js 20, 22, and 24 for every push and pull request on Ubuntu 24.04,
+  using pinned actions, read-only permissions, and credential-free checkout.
+- Each hosted matrix job reruns the full gate from a temporary working
+  directory to enforce path-independent Makefile behavior.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
@@ -75,7 +89,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Node.js tests cover the live-send payload and log-level assignment with a
   fake Twilio client factory. They also cover concise CLI validation errors
   through the exported runner, including combined missing message-setting and
-  credential reporting. Python and Node.js tests also require oversized message
+  credential reporting, generic provider-error handling, and resource-ID
+  redaction. Python and Node.js tests also require oversized message
   bodies to fail before dry-run output or live Twilio client setup.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
@@ -101,6 +116,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `warning` log-level alias coverage.
 - See `docs/plans/2026-06-09-python-cli-errors.md` for Python CLI validation
   error handling coverage.
+- See `docs/plans/2026-06-10-python-cli-error-allowlist.md` for Python's
+  sample-owned validation exception allowlist and provider error redaction.
 - See `docs/plans/2026-06-09-node-client-factory.md` for Node.js mocked
   live-send coverage.
 - See `docs/plans/2026-06-09-node-cli-runner.md` for Node.js CLI validation
@@ -113,8 +130,12 @@ When the required SDK or runtime is unavailable, use static checks and source re
   repository baseline guard and editor metadata ignore coverage.
 - See `docs/plans/2026-06-09-message-body-length.md` for the shared message
   body length guard.
-- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions `make
-  check` baseline.
+- See `docs/plans/2026-06-10-ci-runtime-matrix.md` for the pinned hosted
+  compatibility gate.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the fail-closed hosted workflow
+  contract.
+- See `docs/plans/2026-06-12-python-explicit-message-overrides.md` for the
+  explicit Python argument precedence boundary.
 
 ## Contributing
 

@@ -1,7 +1,50 @@
 const assert = require('assert');
+const childProcess = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const sample = require('../test.js');
+
+const preloadDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'twilio-debug-cli-'));
+const preloadPath = path.join(preloadDirectory, 'before-exit.js');
+fs.writeFileSync(
+  preloadPath,
+  "process.on('beforeExit', function() { process.stdout.write('BEFORE_EXIT\\n'); });\n"
+);
+try {
+  const cliResult = childProcess.spawnSync(
+    process.execPath,
+    ['--require', preloadPath, path.join(__dirname, '..', 'test.js')],
+    {
+      encoding: 'utf8',
+      env: {
+        TWILIO_FROM: 'from-4321',
+        TWILIO_TO: 'to-4567',
+        TWILIO_BODY: 'subprocess body'
+      }
+    }
+  );
+  assert.strictEqual(cliResult.status, 0);
+  assert.strictEqual(cliResult.stderr, '');
+  assert.strictEqual(
+    cliResult.stdout,
+    '{"dryRun":true,"from":"*****4321","to":"***4567","bodyLength":15}\nBEFORE_EXIT\n'
+  );
+
+  const failedCliResult = childProcess.spawnSync(
+    process.execPath,
+    ['--require', preloadPath, path.join(__dirname, '..', 'test.js')],
+    { encoding: 'utf8', env: {} }
+  );
+  assert.strictEqual(failedCliResult.status, 1);
+  assert.strictEqual(failedCliResult.stdout, 'BEFORE_EXIT\n');
+  assert.strictEqual(
+    failedCliResult.stderr,
+    'Missing required Twilio message settings: TWILIO_FROM, TWILIO_TO, TWILIO_BODY\n'
+  );
+} finally {
+  fs.rmSync(preloadDirectory, { recursive: true });
+}
 
 const env = {
   TWILIO_TO: 'to-4567',
@@ -17,6 +60,27 @@ assert.deepStrictEqual(payload, {
 });
 
 assert.strictEqual(sample.redactPhone('to-4567'), '***4567');
+assert.strictEqual(sample.redactPhone('SM1234567890'), '********7890');
+assert.strictEqual(
+  sample.cliErrorMessage(new Error('provider response included auth-token-secret')),
+  'Twilio request failed.'
+);
+assert.strictEqual(
+  sample.cliErrorMessage(new Error('Missing required Twilio credentials: auth-token-secret')),
+  'Twilio request failed.'
+);
+assert.strictEqual(
+  sample.cliErrorMessage(new Error('Missing required Twilio message settings: customer-phone-number')),
+  'Twilio request failed.'
+);
+assert.strictEqual(
+  sample.cliErrorMessage(new Error('Twilio message body must be credential-secret')),
+  'Twilio request failed.'
+);
+assert.strictEqual(
+  sample.cliErrorMessage(new sample.MessageValidationError('Missing required Twilio message settings: TWILIO_TO')),
+  'Missing required Twilio message settings: TWILIO_TO'
+);
 assert.strictEqual(sample.shouldSendLive({ TWILIO_SEND_LIVE: 'true' }), true);
 assert.strictEqual(sample.shouldSendLive({ TWILIO_SEND_LIVE: ' TRUE ' }), true);
 assert.strictEqual(sample.shouldSendLive({ TWILIO_SEND_LIVE: 'false' }), false);
@@ -77,6 +141,11 @@ sample.sendMessage(env).then((result) => {
     TWILIO_FROM: 'from-4321',
     TWILIO_BODY: 'live body'
   };
+  const liveLogs = [];
+  const originalConsoleLog = console.log;
+  console.log = function(message) {
+    liveLogs.push(String(message));
+  };
   return sample.sendMessage(liveEnv, function(accountSid, authToken) {
     seenAccountSid = accountSid;
     seenAuthToken = authToken;
@@ -100,30 +169,69 @@ sample.sendMessage(env).then((result) => {
       body: 'live body'
     });
     assert.strictEqual(message.sid, 'SMNODE123');
-    const cliErrors = [];
-    return sample.runCli({}, function(message) {
-      cliErrors.push(message);
-    }).then((exitCode) => {
-      assert.strictEqual(exitCode, 1);
-      assert.deepStrictEqual(cliErrors, [
-        'Missing required Twilio message settings: TWILIO_FROM, TWILIO_TO, TWILIO_BODY'
-      ]);
-
-      const credentialErrors = [];
-      return sample.runCli({
-        TWILIO_SEND_LIVE: 'true',
-        TWILIO_FROM: 'from-4321',
-        TWILIO_TO: 'to-4567',
-        TWILIO_BODY: 'live body'
-      }, function(message) {
-        credentialErrors.push(message);
-      }).then((credentialExitCode) => {
-        assert.strictEqual(credentialExitCode, 1);
-        assert.deepStrictEqual(credentialErrors, [
-          'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+    assert.deepStrictEqual(liveLogs, ['Created message: *****E123']);
+    assert.strictEqual(liveLogs.join('\n').includes('SMNODE123'), false);
+    return sample.sendMessage(liveEnv, function() {
+      return {
+        logLevel: null,
+        messages: {
+          create: async function() {
+            return {};
+          }
+        }
+      };
+    }).then((messageWithoutSid) => {
+      assert.deepStrictEqual(messageWithoutSid, {});
+      assert.strictEqual(liveLogs[liveLogs.length - 1], 'Created message: ***nown');
+    }).then(() => {
+      console.log = originalConsoleLog;
+      const cliErrors = [];
+      return sample.runCli({}, function(message) {
+        cliErrors.push(message);
+      }).then((exitCode) => {
+        assert.strictEqual(exitCode, 1);
+        assert.deepStrictEqual(cliErrors, [
+          'Missing required Twilio message settings: TWILIO_FROM, TWILIO_TO, TWILIO_BODY'
         ]);
+
+        const credentialErrors = [];
+        return sample.runCli({
+          TWILIO_SEND_LIVE: 'true',
+          TWILIO_FROM: 'from-4321',
+          TWILIO_TO: 'to-4567',
+          TWILIO_BODY: 'live body'
+        }, function(message) {
+          credentialErrors.push(message);
+        }).then((credentialExitCode) => {
+          assert.strictEqual(credentialExitCode, 1);
+          assert.deepStrictEqual(credentialErrors, [
+            'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+          ]);
+          const providerErrors = [];
+          let providerCalls = 0;
+          return sample.runCli(liveEnv, function(message) {
+            providerErrors.push(message);
+          }, function() {
+            return {
+              logLevel: null,
+              messages: {
+                create: async function() {
+                  providerCalls += 1;
+                  throw new Error('provider response included auth-token-secret');
+                }
+              }
+            };
+          }).then((providerExitCode) => {
+            assert.strictEqual(providerExitCode, 1);
+            assert.strictEqual(providerCalls, 1);
+            assert.deepStrictEqual(providerErrors, ['Twilio request failed.']);
+          });
+        });
       });
     });
+  }).catch((error) => {
+    console.log = originalConsoleLog;
+    throw error;
   });
 }).catch((error) => {
   console.error(error);

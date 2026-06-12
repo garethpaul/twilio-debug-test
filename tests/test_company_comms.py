@@ -2,7 +2,7 @@ import importlib.util
 import io
 import logging
 from pathlib import Path
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 import unittest
 from unittest import mock
 
@@ -83,6 +83,47 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(result["to"], "***3333")
         self.assertEqual(result["from"], "*****5555")
         self.assertEqual(result["body_length"], 13)
+
+    def test_explicit_arguments_do_not_read_environment_fallbacks(self):
+        sample = load_sample()
+
+        class FailingEnvironment:
+            def get(self, name, default=None):
+                if name in {"TWILIO_TO", "TWILIO_FROM", "TWILIO_BODY"}:
+                    raise AssertionError("unexpected environment lookup: " + name)
+                return default
+
+        comms = sample.CompanyComms(env=FailingEnvironment())
+
+        result = comms.send_msg("to-3333", "from-5555", "argument body")
+
+        self.assertEqual(result["to"], "***3333")
+        self.assertEqual(result["from"], "*****5555")
+        self.assertEqual(result["body_length"], 13)
+
+    def test_explicit_blank_arguments_do_not_fall_back_to_environment(self):
+        sample = load_sample()
+        env = {
+            "TWILIO_TO": "env-to",
+            "TWILIO_FROM": "env-from",
+            "TWILIO_BODY": "from env",
+        }
+        overrides = {
+            "to": ("   ", None, None),
+            "from": (None, "   ", None),
+            "body": (None, None, "   "),
+        }
+
+        for missing_name, args in overrides.items():
+            with self.subTest(missing_name=missing_name):
+                comms = sample.CompanyComms(env=env, client_factory=FakeTwilioClient)
+                with self.assertRaisesRegex(
+                    sample.MessageValidationError,
+                    missing_name,
+                ):
+                    comms.send_msg(*args)
+
+        self.assertEqual(FakeTwilioClient.instances, [])
 
     def test_message_settings_are_trimmed_before_dry_run(self):
         sample = load_sample()
@@ -183,6 +224,68 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Missing required Twilio message settings", stderr.getvalue())
         self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_main_redacts_created_message_sid(self):
+        sample = load_sample()
+        stdout = io.StringIO()
+        message = type("Message", (), {"sid": "SM1234567890"})()
+
+        with mock.patch.object(sample.CompanyComms, "send_msg", return_value=message):
+            with redirect_stdout(stdout):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("********7890", stdout.getvalue())
+        self.assertNotIn("SM1234567890", stdout.getvalue())
+
+    def test_main_handles_created_message_without_sid(self):
+        sample = load_sample()
+        stdout = io.StringIO()
+        message = object()
+
+        with mock.patch.object(sample.CompanyComms, "send_msg", return_value=message):
+            with redirect_stdout(stdout):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stdout.getvalue(), "Created message: ***nown\n")
+
+    def test_cli_error_message_preserves_credential_validation_errors(self):
+        sample = load_sample()
+        error = sample.CredentialValidationError(
+            "Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN"
+        )
+
+        self.assertEqual(
+            sample.cli_error_message(error),
+            "Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN",
+        )
+
+    def test_main_hides_unexpected_provider_error_details(self):
+        sample = load_sample()
+        stderr = io.StringIO()
+
+        with mock.patch.object(
+            sample.CompanyComms,
+            "send_msg",
+            side_effect=RuntimeError("provider response included auth-token-secret"),
+        ):
+            with redirect_stderr(stderr):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(stderr.getvalue(), "Twilio request failed.\n")
+        self.assertNotIn("auth-token-secret", stderr.getvalue())
+
+    def test_cli_error_message_hides_unexpected_value_errors(self):
+        sample = load_sample()
+
+        message = sample.cli_error_message(
+            ValueError("provider response included auth-token-secret")
+        )
+
+        self.assertEqual(message, "Twilio request failed.")
+        self.assertNotIn("auth-token-secret", message)
 
 
 if __name__ == "__main__":

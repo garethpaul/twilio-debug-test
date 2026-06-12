@@ -14,6 +14,17 @@ TWILIO_LOG_LEVELS = {
 MAX_MESSAGE_BODY_LENGTH = 1600
 
 
+class MessageValidationError(ValueError):
+    pass
+
+
+class CredentialValidationError(RuntimeError):
+    pass
+
+
+SAFE_CLI_ERROR_TYPES = (MessageValidationError, CredentialValidationError)
+
+
 class CompanyComms:
 
     def __init__(self, env=None, client_factory=None):
@@ -40,7 +51,7 @@ class CompanyComms:
             if not setting_value(self.env.get(name))
         ]
         if missing:
-            raise RuntimeError(
+            raise CredentialValidationError(
                 "Missing required Twilio credentials: " + ", ".join(missing)
             )
 
@@ -63,23 +74,17 @@ class CompanyComms:
 
     def _message_payload(self, to_number=None, from_number=None, body=None):
         payload = {
-            "to": (
-                setting_value(to_number) or setting_value(self.env.get("TWILIO_TO"))
-            ),
-            "from": (
-                setting_value(from_number) or setting_value(self.env.get("TWILIO_FROM"))
-            ),
-            "body": (
-                setting_value(body) or setting_value(self.env.get("TWILIO_BODY"))
-            ),
+            "to": message_setting(to_number, self.env, "TWILIO_TO"),
+            "from": message_setting(from_number, self.env, "TWILIO_FROM"),
+            "body": message_setting(body, self.env, "TWILIO_BODY"),
         }
         missing = [key for key, value in payload.items() if not value]
         if missing:
-            raise ValueError(
+            raise MessageValidationError(
                 "Missing required Twilio message settings: " + ", ".join(missing)
             )
         if len(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
-            raise ValueError(
+            raise MessageValidationError(
                 "Twilio message body must be %d characters or fewer."
                 % MAX_MESSAGE_BODY_LENGTH
             )
@@ -105,6 +110,12 @@ def setting_value(value):
     return str(value).strip()
 
 
+def message_setting(override, env, name):
+    if override is None:
+        return setting_value(env.get(name))
+    return setting_value(override)
+
+
 def redact_phone(value):
     value = setting_value(value)
     if not value:
@@ -114,11 +125,17 @@ def redact_phone(value):
     return ("*" * (len(value) - 4)) + value[-4:]
 
 
+def cli_error_message(error):
+    if isinstance(error, SAFE_CLI_ERROR_TYPES):
+        return str(error)
+    return "Twilio request failed."
+
+
 def main():
     try:
         result = CompanyComms().send_msg()
-    except (RuntimeError, ValueError) as error:
-        print(str(error), file=sys.stderr)
+    except Exception as error:
+        print(cli_error_message(error), file=sys.stderr)
         return 1
 
     if isinstance(result, dict) and result.get("dry_run"):
@@ -128,7 +145,11 @@ def main():
             )
         )
     else:
-        print("Created message: {}".format(getattr(result, "sid", "<unknown>")))
+        print(
+            "Created message: {}".format(
+                redact_phone(getattr(result, "sid", "unknown"))
+            )
+        )
     return 0
 
 

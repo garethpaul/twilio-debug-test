@@ -9,6 +9,9 @@ NODE_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-node-credential-errors.md"
 NODE_MESSAGE_SETTINGS_PLAN = DOCS_PLANS / "2026-06-09-node-message-setting-errors.md"
 SCRIPTED_BASELINE_PLAN = DOCS_PLANS / "2026-06-09-scripted-baseline-check.md"
 MESSAGE_BODY_LENGTH_PLAN = DOCS_PLANS / "2026-06-09-message-body-length.md"
+CI_BASELINE_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
+CI_RUNTIME_MATRIX_PLAN = DOCS_PLANS / "2026-06-10-ci-runtime-matrix.md"
+CLI_OUTPUT_PRIVACY_PLAN = DOCS_PLANS / "2026-06-10-cli-output-privacy.md"
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -20,6 +23,9 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(NODE_MESSAGE_SETTINGS_PLAN, plans)
         self.assertIn(SCRIPTED_BASELINE_PLAN, plans)
         self.assertIn(MESSAGE_BODY_LENGTH_PLAN, plans)
+        self.assertIn(CI_BASELINE_PLAN, plans)
+        self.assertIn(CI_RUNTIME_MATRIX_PLAN, plans)
+        self.assertIn(CLI_OUTPUT_PRIVACY_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
@@ -29,7 +35,7 @@ class DocsPlansTest(unittest.TestCase):
     def test_check_gate_runs_scripted_baseline(self):
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 
-        self.assertIn("scripts/check-baseline.sh", makefile)
+        self.assertIn('"$(ROOT)/scripts/check-baseline.sh"', makefile)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ Priority:
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
+- Keep explicit Python message arguments authoritative, including invalid blanks
 - Bound sample message bodies before dry-run output or live send setup
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
@@ -29,7 +30,12 @@ Priority:
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients
-- Keep GitHub Actions running the Python and Node `make check` baseline
+- Keep live-send Message SIDs redacted in command-line output
+- Keep unexpected provider diagnostics out of user-facing stderr
+- Allowlist sample-owned Python validation exceptions instead of broad built-in types
+- Allowlist sample-owned Node.js validation exceptions instead of message prefixes
+- Keep the Python and Node.js compatibility matrix enforced in hosted CI
+- Keep hosted checks unfiltered across branches and independent of caller paths
 
 Next priorities:
 

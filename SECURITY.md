@@ -30,9 +30,17 @@ Helpful reports include:
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
-- GitHub Actions runs `make check` with Python 3.12 and Node 20; keep that
-  hosted baseline aligned with local verification when changing Twilio sample
-  payloads, logging, or credential handling.
+- GitHub Actions uses immutable action pins, read-only repository permissions,
+  credential-free checkout, a fixed Ubuntu 24.04 runner, and a bounded runtime
+  while exercising the Python and Node.js sample checks on every push and pull
+  request.
+- Command-line output must redact Twilio resource identifiers and must not emit
+  unexpected provider error details that may contain credentials, phone
+  numbers, request URLs, or message metadata.
+- Python and Node.js expose local validation details only for sample-owned error
+  types; provider-controlled message prefixes are never trusted.
+- Explicit blank Python message arguments must fail validation instead of
+  falling back to an environment recipient, sender, or body.
 
 ## Service and API Notes
 

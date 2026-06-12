@@ -1,5 +1,8 @@
 const MAX_MESSAGE_BODY_LENGTH = 1600;
 
+class MessageValidationError extends Error {}
+class CredentialValidationError extends Error {}
+
 function missingSettings(env, names) {
   return names.filter(function(name) {
     return !settingValue(env[name]);
@@ -43,6 +46,13 @@ function redactPhone(value) {
   return '*'.repeat(value.length - 4) + value.slice(-4);
 }
 
+function cliErrorMessage(error) {
+  if (error instanceof MessageValidationError || error instanceof CredentialValidationError) {
+    return error.message;
+  }
+  return 'Twilio request failed.';
+}
+
 function createMessagePayload(env) {
   env = env || process.env;
   const missingMessageSettings = missingSettings(env, [
@@ -51,7 +61,7 @@ function createMessagePayload(env) {
     'TWILIO_BODY'
   ]);
   if (missingMessageSettings.length) {
-    throw new Error(
+    throw new MessageValidationError(
       'Missing required Twilio message settings: ' + missingMessageSettings.join(', ')
     );
   }
@@ -62,7 +72,7 @@ function createMessagePayload(env) {
     body: settingValue(env.TWILIO_BODY)
   };
   if (payload.body.length > MAX_MESSAGE_BODY_LENGTH) {
-    throw new Error(
+    throw new MessageValidationError(
       'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH + ' characters or fewer.'
     );
   }
@@ -89,7 +99,7 @@ async function sendMessage(env, clientFactory) {
     'TWILIO_AUTH_TOKEN'
   ]);
   if (missingCredentials.length) {
-    throw new Error(
+    throw new CredentialValidationError(
       'Missing required Twilio credentials: ' + missingCredentials.join(', ')
     );
   }
@@ -101,33 +111,35 @@ async function sendMessage(env, clientFactory) {
   client.logLevel = twilioLogLevel(env);
 
   const message = await client.messages.create(payload);
-  console.log('Created message using promises');
-  console.log(message.sid);
+  console.log('Created message: ' + redactPhone(message.sid || 'unknown'));
   return message;
 }
 
-async function runCli(env, logError) {
+async function runCli(env, logError, clientFactory) {
   env = env || process.env;
   logError = logError || console.error;
 
   try {
-    await sendMessage(env);
+    await sendMessage(env, clientFactory);
     return 0;
   } catch (error) {
-    logError(error.message);
+    logError(cliErrorMessage(error));
     return 1;
   }
 }
 
 if (require.main === module) {
   runCli().then(function(exitCode) {
-    process.exit(exitCode);
+    process.exitCode = exitCode;
   });
 }
 
 module.exports = {
+  cliErrorMessage,
+  CredentialValidationError,
   createMessagePayload,
   MAX_MESSAGE_BODY_LENGTH,
+  MessageValidationError,
   redactPhone,
   runCli,
   sendMessage,
