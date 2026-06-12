@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-12
+
+- Stopped explicit blank Python message arguments from silently falling back
+  to environment recipients, senders, or bodies.
+- Added fail-closed override tests that verify invalid explicit values are
+  rejected before Twilio client construction.
+
 ## 2026-06-10
 
 - Allowlisted sample-owned Python validation exceptions so provider-raised

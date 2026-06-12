@@ -49,6 +49,25 @@ for python_privacy_contract in \
   fi
 done
 
+for python_override_contract in \
+  "def message_setting(override, fallback)" \
+  "if override is None:" \
+  "test_explicit_blank_arguments_do_not_fall_back_to_environment" \
+  "self.assertEqual(FakeTwilioClient.instances, [])"; do
+  if ! grep -Fq -- "$python_override_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$python_override_contract" "$ROOT_DIR/tests/test_company_comms.py"; then
+    printf '%s\n' "Python explicit override contract is missing: $python_override_contract" >&2
+    exit 1
+  fi
+done
+
+for override_doc in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "explicit" "$override_doc"; then
+    printf '%s\n' "$override_doc must document explicit Python message overrides." >&2
+    exit 1
+  fi
+done
+
 WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 
 for workflow_contract in \

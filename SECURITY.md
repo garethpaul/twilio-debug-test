@@ -36,6 +36,8 @@ Helpful reports include:
 - Command-line output must redact Twilio resource identifiers and must not emit
   unexpected provider error details that may contain credentials, phone
   numbers, request URLs, or message metadata.
+- Explicit blank Python message arguments must fail validation instead of
+  falling back to an environment recipient, sender, or body.
 
 ## Service and API Notes
 

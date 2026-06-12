@@ -45,6 +45,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
   Message bodies are limited to 1600 characters in both samples.
+- Python message arguments fall back to environment settings only when omitted;
+  explicit blank recipients, senders, and bodies fail validation before dry-run
+  output or live client setup.
 - The Python sample reports expected configuration errors as concise stderr
   messages and exits non-zero instead of printing tracebacks. Unexpected Twilio
   provider errors are replaced with a generic message, including provider-raised
@@ -124,6 +127,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   body length guard.
 - See `docs/plans/2026-06-10-ci-runtime-matrix.md` for the pinned hosted
   compatibility gate.
+- See `docs/plans/2026-06-12-python-explicit-message-overrides.md` for the
+  explicit Python argument precedence boundary.
 
 ## Contributing
 

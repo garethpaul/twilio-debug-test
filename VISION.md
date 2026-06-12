@@ -20,6 +20,7 @@ Priority:
 - Treat live message sending as an explicit opt-in action
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
+- Keep explicit Python message arguments authoritative, including invalid blanks
 - Bound sample message bodies before dry-run output or live send setup
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples

@@ -74,15 +74,9 @@ class CompanyComms:
 
     def _message_payload(self, to_number=None, from_number=None, body=None):
         payload = {
-            "to": (
-                setting_value(to_number) or setting_value(self.env.get("TWILIO_TO"))
-            ),
-            "from": (
-                setting_value(from_number) or setting_value(self.env.get("TWILIO_FROM"))
-            ),
-            "body": (
-                setting_value(body) or setting_value(self.env.get("TWILIO_BODY"))
-            ),
+            "to": message_setting(to_number, self.env.get("TWILIO_TO")),
+            "from": message_setting(from_number, self.env.get("TWILIO_FROM")),
+            "body": message_setting(body, self.env.get("TWILIO_BODY")),
         }
         missing = [key for key, value in payload.items() if not value]
         if missing:
@@ -114,6 +108,12 @@ def setting_value(value):
     if value is None:
         return ""
     return str(value).strip()
+
+
+def message_setting(override, fallback):
+    if override is None:
+        return setting_value(fallback)
+    return setting_value(override)
 
 
 def redact_phone(value):

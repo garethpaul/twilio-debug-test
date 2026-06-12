@@ -84,6 +84,30 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(result["from"], "*****5555")
         self.assertEqual(result["body_length"], 13)
 
+    def test_explicit_blank_arguments_do_not_fall_back_to_environment(self):
+        sample = load_sample()
+        env = {
+            "TWILIO_TO": "env-to",
+            "TWILIO_FROM": "env-from",
+            "TWILIO_BODY": "from env",
+        }
+        overrides = {
+            "to": ("   ", None, None),
+            "from": (None, "   ", None),
+            "body": (None, None, "   "),
+        }
+
+        for missing_name, args in overrides.items():
+            with self.subTest(missing_name=missing_name):
+                comms = sample.CompanyComms(env=env, client_factory=FakeTwilioClient)
+                with self.assertRaisesRegex(
+                    sample.MessageValidationError,
+                    missing_name,
+                ):
+                    comms.send_msg(*args)
+
+        self.assertEqual(FakeTwilioClient.instances, [])
+
     def test_message_settings_are_trimmed_before_dry_run(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
