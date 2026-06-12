@@ -44,7 +44,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
-  Message bodies are limited to 1600 characters in both samples.
+  Sender and recipient values must use E.164 form (`+` followed by 2-15 ASCII
+  digits with a nonzero first digit). Message bodies are limited to 1600
+  characters in both samples.
 - Python message arguments fall back to environment settings only when omitted;
   explicit blank recipients, senders, and bodies fail validation before dry-run
   output or live client setup.
@@ -56,6 +58,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The Node.js sample exposes a testable CLI runner that reports expected
   configuration errors as concise messages and exits non-zero. Its client
   factory can also be injected through the runner to verify provider failures.
+- Node.js CLI validation messages are allowlisted by sample-owned error type,
+  not by provider-controlled message prefix.
 - Successful live sends return the full Twilio result to callers but print only
   a redacted Message SID in both command-line samples.
 - The Node.js message payload path reports all missing message setting names
@@ -76,7 +80,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
 - GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
-  with Node.js 20, 22, and 24 for pushes and pull requests on Ubuntu 24.04.
+  with Node.js 20, 22, and 24 for every push and pull request on Ubuntu 24.04,
+  using pinned actions, read-only permissions, and credential-free checkout.
+- Each hosted matrix job reruns the full gate from a temporary working
+  directory to enforce path-independent Makefile behavior.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
@@ -86,7 +93,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   through the exported runner, including combined missing message-setting and
   credential reporting, generic provider-error handling, and resource-ID
   redaction. Python and Node.js tests also require oversized message
-  bodies to fail before dry-run output or live Twilio client setup.
+  bodies and malformed phone values to fail before dry-run output or live
+  Twilio client setup.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 
@@ -127,8 +135,12 @@ When the required SDK or runtime is unavailable, use static checks and source re
   body length guard.
 - See `docs/plans/2026-06-10-ci-runtime-matrix.md` for the pinned hosted
   compatibility gate.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the fail-closed hosted workflow
+  contract.
 - See `docs/plans/2026-06-12-python-explicit-message-overrides.md` for the
   explicit Python argument precedence boundary.
+- See `docs/plans/2026-06-12-e164-phone-validation.md` for shared sender and
+  recipient format validation.
 
 ## Contributing
 

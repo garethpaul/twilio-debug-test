@@ -21,6 +21,7 @@ Priority:
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
 - Keep explicit Python message arguments authoritative, including invalid blanks
+- Validate sender and recipient settings consistently as E.164 values
 - Bound sample message bodies before dry-run output or live send setup
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
@@ -33,7 +34,9 @@ Priority:
 - Keep live-send Message SIDs redacted in command-line output
 - Keep unexpected provider diagnostics out of user-facing stderr
 - Allowlist sample-owned Python validation exceptions instead of broad built-in types
+- Allowlist sample-owned Node.js validation exceptions instead of message prefixes
 - Keep the Python and Node.js compatibility matrix enforced in hosted CI
+- Keep hosted checks unfiltered across branches and independent of caller paths
 
 Next priorities:
 

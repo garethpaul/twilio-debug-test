@@ -1,6 +1,6 @@
 .PHONY: build check lint test verify
 
-ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ROOT := $(CURDIR)
 PYTHON ?= python3
 NODE ?= node
 

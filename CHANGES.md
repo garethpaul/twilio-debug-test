@@ -2,15 +2,25 @@
 
 ## 2026-06-12
 
+- Required Python and Node.js sender and recipient settings to use a trimmed
+  E.164 shape before dry-run output or live client construction.
+- Added shared boundary, malformed-input, and concise CLI-error coverage for
+  both runtimes.
 - Stopped explicit blank Python message arguments from silently falling back
   to environment recipients, senders, or bodies.
 - Added fail-closed override tests that verify invalid explicit values are
   rejected before Twilio client construction.
+- Avoided reading environment fallbacks when all Python message arguments are
+  explicitly supplied.
+- Made external verification safe for repository paths containing spaces and
+  allowed Node.js CLI output to flush before process termination.
 
 ## 2026-06-10
 
 - Allowlisted sample-owned Python validation exceptions so provider-raised
   built-in `RuntimeError` and `ValueError` details remain redacted.
+- Allowlisted sample-owned Node.js validation exceptions so provider-controlled
+  messages cannot impersonate local configuration errors and bypass redaction.
 - Redacted Twilio Message SIDs in Python and Node.js command-line success output
   while preserving full SDK results for programmatic callers.
 - Added generic handling for unexpected provider errors so CLI stderr cannot
@@ -20,7 +30,9 @@
 - Fixed CI to Ubuntu 24.04, upgraded action annotations and setup-node to
   v6.4.0, scoped concurrency, and made Make targets root-independent.
 - Added a pinned, read-only GitHub Actions matrix covering Python 3.10, 3.12,
-  and 3.14 with Node.js 20, 22, and 24.
+  and 3.14 with Node.js 20, 22, and 24 on every push and pull request.
+- Disabled checkout credential persistence and added an external-working-
+  directory run of the full gate to each hosted matrix job.
 - Extended the local baseline and docs-plan tests to protect the hosted CI
   contract.
 

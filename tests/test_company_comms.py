@@ -58,16 +58,16 @@ class CompanyCommsTest(unittest.TestCase):
     def test_dry_run_uses_environment_without_twilio_import(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
-            "TWILIO_TO": "to-4567",
-            "TWILIO_FROM": "from-4321",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "hello from dry run",
         })
 
         result = comms.sendMsg(None, None, None)
 
         self.assertEqual(result["dry_run"], True)
-        self.assertEqual(result["to"], "***4567")
-        self.assertEqual(result["from"], "*****4321")
+        self.assertEqual(result["to"], "********0123")
+        self.assertEqual(result["from"], "********0124")
         self.assertEqual(result["body_length"], 18)
 
     def test_explicit_arguments_override_environment(self):
@@ -78,10 +78,27 @@ class CompanyCommsTest(unittest.TestCase):
             "TWILIO_BODY": "from env",
         })
 
-        result = comms.sendMsg("to-3333", "from-5555", "argument body")
+        result = comms.sendMsg("+12025550125", "+12025550126", "argument body")
 
-        self.assertEqual(result["to"], "***3333")
-        self.assertEqual(result["from"], "*****5555")
+        self.assertEqual(result["to"], "********0125")
+        self.assertEqual(result["from"], "********0126")
+        self.assertEqual(result["body_length"], 13)
+
+    def test_explicit_arguments_do_not_read_environment_fallbacks(self):
+        sample = load_sample()
+
+        class FailingEnvironment:
+            def get(self, name, default=None):
+                if name in {"TWILIO_TO", "TWILIO_FROM", "TWILIO_BODY"}:
+                    raise AssertionError("unexpected environment lookup: " + name)
+                return default
+
+        comms = sample.CompanyComms(env=FailingEnvironment())
+
+        result = comms.send_msg("+12025550125", "+12025550126", "argument body")
+
+        self.assertEqual(result["to"], "********0125")
+        self.assertEqual(result["from"], "********0126")
         self.assertEqual(result["body_length"], 13)
 
     def test_explicit_blank_arguments_do_not_fall_back_to_environment(self):
@@ -111,22 +128,69 @@ class CompanyCommsTest(unittest.TestCase):
     def test_message_settings_are_trimmed_before_dry_run(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
-            "TWILIO_TO": "  to-4567  ",
-            "TWILIO_FROM": "  from-4321  ",
+            "TWILIO_TO": "  +12025550123  ",
+            "TWILIO_FROM": "  +12025550124  ",
             "TWILIO_BODY": "  hello  ",
         })
 
         result = comms.send_msg()
 
-        self.assertEqual(result["to"], "***4567")
-        self.assertEqual(result["from"], "*****4321")
+        self.assertEqual(result["to"], "********0123")
+        self.assertEqual(result["from"], "********0124")
         self.assertEqual(result["body_length"], 5)
+
+    def test_e164_phone_boundaries_are_accepted(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_TO": "+12",
+            "TWILIO_FROM": "+123456789012345",
+            "TWILIO_BODY": "hello",
+        })
+
+        result = comms.send_msg()
+
+        self.assertTrue(result["dry_run"])
+        self.assertEqual(FakeTwilioClient.instances, [])
+
+    def test_phone_settings_must_use_e164(self):
+        sample = load_sample()
+        invalid_values = (
+            "15551234567",
+            "+05551234567",
+            "+1 5551234567",
+            "+1-555-123-4567",
+            "+12025550123x9",
+            "+١٢",
+            "+1234567890123456",
+        )
+
+        for field in ("TWILIO_TO", "TWILIO_FROM"):
+            for invalid_value in invalid_values:
+                with self.subTest(field=field, invalid_value=invalid_value):
+                    env = {
+                        "TWILIO_TO": "+12025550123",
+                        "TWILIO_FROM": "+12025550124",
+                        "TWILIO_BODY": "hello",
+                    }
+                    env[field] = invalid_value
+                    comms = sample.CompanyComms(
+                        env=env,
+                        client_factory=FakeTwilioClient,
+                    )
+
+                    with self.assertRaisesRegex(
+                        sample.MessageValidationError,
+                        "{} must be an E.164 phone number".format(field),
+                    ):
+                        comms.send_msg()
+
+        self.assertEqual(FakeTwilioClient.instances, [])
 
     def test_blank_message_body_is_missing(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
-            "TWILIO_TO": "to-4567",
-            "TWILIO_FROM": "from-4321",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "   ",
         })
 
@@ -136,8 +200,8 @@ class CompanyCommsTest(unittest.TestCase):
     def test_oversized_message_body_is_rejected(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={
-            "TWILIO_TO": "to-4567",
-            "TWILIO_FROM": "from-4321",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "x" * (sample.MAX_MESSAGE_BODY_LENGTH + 1),
         })
 
@@ -148,8 +212,8 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
-            "TWILIO_TO": "to-4567",
-            "TWILIO_FROM": "from-4321",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "hello",
         })
 
@@ -167,8 +231,8 @@ class CompanyCommsTest(unittest.TestCase):
             "TWILIO_SEND_LIVE": "true",
             "TWILIO_ACCOUNT_SID": "AC123",
             "TWILIO_AUTH_TOKEN": "secret",
-            "TWILIO_TO": "to-4567",
-            "TWILIO_FROM": "from-4321",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "hello",
         }, client_factory=FakeTwilioClient)
 
@@ -208,6 +272,26 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertIn("Missing required Twilio message settings", stderr.getvalue())
         self.assertNotIn("Traceback", stderr.getvalue())
 
+    def test_main_reports_invalid_phone_without_traceback(self):
+        sample = load_sample()
+        stderr = io.StringIO()
+        env = {
+            "TWILIO_TO": "not-a-phone",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+
+        with mock.patch.dict(sample.os.environ, env, clear=True):
+            with redirect_stderr(stderr):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            stderr.getvalue(),
+            "TWILIO_TO must be an E.164 phone number.\n",
+        )
+        self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_main_redacts_created_message_sid(self):
         sample = load_sample()
         stdout = io.StringIO()
@@ -220,6 +304,29 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertIn("********7890", stdout.getvalue())
         self.assertNotIn("SM1234567890", stdout.getvalue())
+
+    def test_main_handles_created_message_without_sid(self):
+        sample = load_sample()
+        stdout = io.StringIO()
+        message = object()
+
+        with mock.patch.object(sample.CompanyComms, "send_msg", return_value=message):
+            with redirect_stdout(stdout):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stdout.getvalue(), "Created message: ***nown\n")
+
+    def test_cli_error_message_preserves_credential_validation_errors(self):
+        sample = load_sample()
+        error = sample.CredentialValidationError(
+            "Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN"
+        )
+
+        self.assertEqual(
+            sample.cli_error_message(error),
+            "Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN",
+        )
 
     def test_main_hides_unexpected_provider_error_details(self):
         sample = load_sample()

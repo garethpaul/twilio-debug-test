@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 import sys
 
 TWILIO_LOG_LEVELS = {
@@ -12,6 +13,7 @@ TWILIO_LOG_LEVELS = {
     "silent": logging.CRITICAL + 10,
 }
 MAX_MESSAGE_BODY_LENGTH = 1600
+E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")
 
 
 class MessageValidationError(ValueError):
@@ -74,15 +76,17 @@ class CompanyComms:
 
     def _message_payload(self, to_number=None, from_number=None, body=None):
         payload = {
-            "to": message_setting(to_number, self.env.get("TWILIO_TO")),
-            "from": message_setting(from_number, self.env.get("TWILIO_FROM")),
-            "body": message_setting(body, self.env.get("TWILIO_BODY")),
+            "to": message_setting(to_number, self.env, "TWILIO_TO"),
+            "from": message_setting(from_number, self.env, "TWILIO_FROM"),
+            "body": message_setting(body, self.env, "TWILIO_BODY"),
         }
         missing = [key for key, value in payload.items() if not value]
         if missing:
             raise MessageValidationError(
                 "Missing required Twilio message settings: " + ", ".join(missing)
             )
+        validate_phone(payload["to"], "TWILIO_TO")
+        validate_phone(payload["from"], "TWILIO_FROM")
         if len(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
             raise MessageValidationError(
                 "Twilio message body must be %d characters or fewer."
@@ -110,10 +114,17 @@ def setting_value(value):
     return str(value).strip()
 
 
-def message_setting(override, fallback):
+def message_setting(override, env, name):
     if override is None:
-        return setting_value(fallback)
+        return setting_value(env.get(name))
     return setting_value(override)
+
+
+def validate_phone(value, name):
+    if not E164_PHONE_PATTERN.fullmatch(value):
+        raise MessageValidationError(
+            "{} must be an E.164 phone number.".format(name)
+        )
 
 
 def redact_phone(value):
@@ -147,7 +158,7 @@ def main():
     else:
         print(
             "Created message: {}".format(
-                redact_phone(getattr(result, "sid", "<unknown>"))
+                redact_phone(getattr(result, "sid", "unknown"))
             )
         )
     return 0

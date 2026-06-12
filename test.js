@@ -1,4 +1,8 @@
 const MAX_MESSAGE_BODY_LENGTH = 1600;
+const E164_PHONE_PATTERN = /^\+[1-9][0-9]{1,14}$/;
+
+class MessageValidationError extends Error {}
+class CredentialValidationError extends Error {}
 
 function missingSettings(env, names) {
   return names.filter(function(name) {
@@ -44,11 +48,16 @@ function redactPhone(value) {
 }
 
 function cliErrorMessage(error) {
-  const message = error && error.message ? String(error.message) : '';
-  if (/^(Missing required Twilio (message settings|credentials):|Twilio message body must be)/.test(message)) {
-    return message;
+  if (error instanceof MessageValidationError || error instanceof CredentialValidationError) {
+    return error.message;
   }
   return 'Twilio request failed.';
+}
+
+function validatePhone(value, name) {
+  if (!E164_PHONE_PATTERN.test(value)) {
+    throw new MessageValidationError(name + ' must be an E.164 phone number.');
+  }
 }
 
 function createMessagePayload(env) {
@@ -59,7 +68,7 @@ function createMessagePayload(env) {
     'TWILIO_BODY'
   ]);
   if (missingMessageSettings.length) {
-    throw new Error(
+    throw new MessageValidationError(
       'Missing required Twilio message settings: ' + missingMessageSettings.join(', ')
     );
   }
@@ -69,8 +78,10 @@ function createMessagePayload(env) {
     to: settingValue(env.TWILIO_TO),
     body: settingValue(env.TWILIO_BODY)
   };
+  validatePhone(payload.to, 'TWILIO_TO');
+  validatePhone(payload.from, 'TWILIO_FROM');
   if (payload.body.length > MAX_MESSAGE_BODY_LENGTH) {
-    throw new Error(
+    throw new MessageValidationError(
       'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH + ' characters or fewer.'
     );
   }
@@ -97,7 +108,7 @@ async function sendMessage(env, clientFactory) {
     'TWILIO_AUTH_TOKEN'
   ]);
   if (missingCredentials.length) {
-    throw new Error(
+    throw new CredentialValidationError(
       'Missing required Twilio credentials: ' + missingCredentials.join(', ')
     );
   }
@@ -109,7 +120,7 @@ async function sendMessage(env, clientFactory) {
   client.logLevel = twilioLogLevel(env);
 
   const message = await client.messages.create(payload);
-  console.log('Created message: ' + redactPhone(message.sid || '<unknown>'));
+  console.log('Created message: ' + redactPhone(message.sid || 'unknown'));
   return message;
 }
 
@@ -128,14 +139,16 @@ async function runCli(env, logError, clientFactory) {
 
 if (require.main === module) {
   runCli().then(function(exitCode) {
-    process.exit(exitCode);
+    process.exitCode = exitCode;
   });
 }
 
 module.exports = {
   cliErrorMessage,
+  CredentialValidationError,
   createMessagePayload,
   MAX_MESSAGE_BODY_LENGTH,
+  MessageValidationError,
   redactPhone,
   runCli,
   sendMessage,
