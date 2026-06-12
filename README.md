@@ -66,6 +66,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `scripts/check-baseline.sh`
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
+- GitHub Actions runs the same `make check` baseline with Python 3.12 and Node
+  20 for pushes and pull requests.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
@@ -111,6 +113,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   repository baseline guard and editor metadata ignore coverage.
 - See `docs/plans/2026-06-09-message-body-length.md` for the shared message
   body length guard.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions `make
+  check` baseline.
 
 ## Contributing
 

@@ -29,6 +29,7 @@ Priority:
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients
+- Keep GitHub Actions running the Python and Node `make check` baseline
 
 Next priorities:
 

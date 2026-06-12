@@ -17,6 +17,7 @@ require_file() {
 
 for path in \
   ".gitignore" \
+  ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
   "README.md" \
@@ -29,6 +30,7 @@ for path in \
   "tests/test_js_contracts.js" \
   "docs/plans/2026-06-08-twilio-debug-test-baseline.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
+  "docs/plans/2026-06-10-ci-baseline.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -52,6 +54,22 @@ for command in \
   "scripts/check-baseline.sh"; do
   if ! grep -Fq "$command" "$README"; then
     printf '%s\n' "README must document $command." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "actions/setup-python@v5" "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq 'python-version: "3.12"' "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq "actions/setup-node@v4" "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq 'node-version: "20"' "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq "make check" "$ROOT_DIR/.github/workflows/check.yml"; then
+  printf '%s\n' "GitHub Actions workflow must install Python 3.12, Node 20, and run make check." >&2
+  exit 1
+fi
+
+for doc in "$ROOT_DIR/README.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "GitHub Actions" "$doc"; then
+    printf '%s\n' "$doc must mention the GitHub Actions baseline." >&2
     exit 1
   fi
 done
