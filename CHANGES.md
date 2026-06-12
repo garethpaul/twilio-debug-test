@@ -2,6 +2,10 @@
 
 ## 2026-06-12
 
+- Required Python and Node.js sender and recipient settings to use a trimmed
+  E.164 shape before dry-run output or live client construction.
+- Added shared boundary, malformed-input, and concise CLI-error coverage for
+  both runtimes.
 - Stopped explicit blank Python message arguments from silently falling back
   to environment recipients, senders, or bodies.
 - Added fail-closed override tests that verify invalid explicit values are

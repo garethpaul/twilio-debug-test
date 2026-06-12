@@ -18,8 +18,8 @@ try {
     {
       encoding: 'utf8',
       env: {
-        TWILIO_FROM: 'from-4321',
-        TWILIO_TO: 'to-4567',
+        TWILIO_FROM: '+12025550124',
+        TWILIO_TO: '+12025550123',
         TWILIO_BODY: 'subprocess body'
       }
     }
@@ -28,7 +28,7 @@ try {
   assert.strictEqual(cliResult.stderr, '');
   assert.strictEqual(
     cliResult.stdout,
-    '{"dryRun":true,"from":"*****4321","to":"***4567","bodyLength":15}\nBEFORE_EXIT\n'
+    '{"dryRun":true,"from":"********0124","to":"********0123","bodyLength":15}\nBEFORE_EXIT\n'
   );
 
   const failedCliResult = childProcess.spawnSync(
@@ -47,19 +47,19 @@ try {
 }
 
 const env = {
-  TWILIO_TO: 'to-4567',
-  TWILIO_FROM: 'from-4321',
+  TWILIO_TO: '+12025550123',
+  TWILIO_FROM: '+12025550124',
   TWILIO_BODY: 'hello from node'
 };
 
 const payload = sample.createMessagePayload(env);
 assert.deepStrictEqual(payload, {
-  from: 'from-4321',
-  to: 'to-4567',
+  from: '+12025550124',
+  to: '+12025550123',
   body: 'hello from node'
 });
 
-assert.strictEqual(sample.redactPhone('to-4567'), '***4567');
+assert.strictEqual(sample.redactPhone('+12025550123'), '********0123');
 assert.strictEqual(sample.redactPhone('SM1234567890'), '********7890');
 assert.strictEqual(
   sample.cliErrorMessage(new Error('provider response included auth-token-secret')),
@@ -95,39 +95,70 @@ assert.ok(
     .includes('client.logLevel = twilioLogLevel(env);')
 );
 assert.throws(
-  () => sample.createMessagePayload({ TWILIO_TO: 'to-4567' }),
+  () => sample.createMessagePayload({ TWILIO_TO: '+12025550123' }),
   /Missing required Twilio message settings: TWILIO_FROM, TWILIO_BODY/
 );
 assert.throws(
   () => sample.createMessagePayload({
-    TWILIO_FROM: 'from-4321',
-    TWILIO_TO: 'to-4567',
+    TWILIO_FROM: '+12025550124',
+    TWILIO_TO: '+12025550123',
     TWILIO_BODY: '   '
   }),
   /TWILIO_BODY/
 );
 assert.throws(
   () => sample.createMessagePayload({
-    TWILIO_FROM: 'from-4321',
-    TWILIO_TO: 'to-4567',
+    TWILIO_FROM: '+12025550124',
+    TWILIO_TO: '+12025550123',
     TWILIO_BODY: 'x'.repeat(sample.MAX_MESSAGE_BODY_LENGTH + 1)
   }),
   /1600 characters/
 );
 assert.deepStrictEqual(sample.createMessagePayload({
-  TWILIO_FROM: '  from-4321  ',
-  TWILIO_TO: '  to-4567  ',
+  TWILIO_FROM: '  +12025550124  ',
+  TWILIO_TO: '  +12025550123  ',
   TWILIO_BODY: '  hello  '
 }), {
-  from: 'from-4321',
-  to: 'to-4567',
+  from: '+12025550124',
+  to: '+12025550123',
   body: 'hello'
+});
+assert.deepStrictEqual(sample.createMessagePayload({
+  TWILIO_FROM: '+123456789012345',
+  TWILIO_TO: '+12',
+  TWILIO_BODY: 'hello'
+}), {
+  from: '+123456789012345',
+  to: '+12',
+  body: 'hello'
+});
+[
+  '15551234567',
+  '+05551234567',
+  '+1 5551234567',
+  '+1-555-123-4567',
+  '+12025550123x9',
+  '+١٢',
+  '+1234567890123456'
+].forEach((invalidValue) => {
+  ['TWILIO_TO', 'TWILIO_FROM'].forEach((field) => {
+    const invalidEnv = {
+      TWILIO_FROM: '+12025550124',
+      TWILIO_TO: '+12025550123',
+      TWILIO_BODY: 'hello'
+    };
+    invalidEnv[field] = invalidValue;
+    assert.throws(
+      () => sample.createMessagePayload(invalidEnv),
+      new RegExp(field + ' must be an E\\.164 phone number')
+    );
+  });
 });
 
 sample.sendMessage(env).then((result) => {
   assert.strictEqual(result.dryRun, true);
-  assert.strictEqual(result.to, '***4567');
-  assert.strictEqual(result.from, '*****4321');
+  assert.strictEqual(result.to, '********0123');
+  assert.strictEqual(result.from, '********0124');
   assert.strictEqual(result.bodyLength, 15);
   let createdClient;
   let seenAccountSid;
@@ -137,8 +168,8 @@ sample.sendMessage(env).then((result) => {
     TWILIO_SEND_LIVE: 'true',
     TWILIO_ACCOUNT_SID: 'AC123',
     TWILIO_AUTH_TOKEN: 'secret',
-    TWILIO_TO: 'to-4567',
-    TWILIO_FROM: 'from-4321',
+    TWILIO_TO: '+12025550123',
+    TWILIO_FROM: '+12025550124',
     TWILIO_BODY: 'live body'
   };
   const liveLogs = [];
@@ -164,8 +195,8 @@ sample.sendMessage(env).then((result) => {
     assert.strictEqual(seenAuthToken, 'secret');
     assert.strictEqual(createdClient.logLevel, 'info');
     assert.deepStrictEqual(seenPayload, {
-      from: 'from-4321',
-      to: 'to-4567',
+      from: '+12025550124',
+      to: '+12025550123',
       body: 'live body'
     });
     assert.strictEqual(message.sid, 'SMNODE123');
@@ -194,37 +225,51 @@ sample.sendMessage(env).then((result) => {
           'Missing required Twilio message settings: TWILIO_FROM, TWILIO_TO, TWILIO_BODY'
         ]);
 
-        const credentialErrors = [];
+        const invalidPhoneErrors = [];
         return sample.runCli({
-          TWILIO_SEND_LIVE: 'true',
-          TWILIO_FROM: 'from-4321',
-          TWILIO_TO: 'to-4567',
+          TWILIO_FROM: '+12025550124',
+          TWILIO_TO: 'not-a-phone',
           TWILIO_BODY: 'live body'
         }, function(message) {
-          credentialErrors.push(message);
-        }).then((credentialExitCode) => {
-          assert.strictEqual(credentialExitCode, 1);
-          assert.deepStrictEqual(credentialErrors, [
-            'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+          invalidPhoneErrors.push(message);
+        }).then((invalidPhoneExitCode) => {
+          assert.strictEqual(invalidPhoneExitCode, 1);
+          assert.deepStrictEqual(invalidPhoneErrors, [
+            'TWILIO_TO must be an E.164 phone number.'
           ]);
-          const providerErrors = [];
-          let providerCalls = 0;
-          return sample.runCli(liveEnv, function(message) {
-            providerErrors.push(message);
-          }, function() {
-            return {
-              logLevel: null,
-              messages: {
-                create: async function() {
-                  providerCalls += 1;
-                  throw new Error('provider response included auth-token-secret');
+
+          const credentialErrors = [];
+          return sample.runCli({
+            TWILIO_SEND_LIVE: 'true',
+            TWILIO_FROM: '+12025550124',
+            TWILIO_TO: '+12025550123',
+            TWILIO_BODY: 'live body'
+          }, function(message) {
+            credentialErrors.push(message);
+          }).then((credentialExitCode) => {
+            assert.strictEqual(credentialExitCode, 1);
+            assert.deepStrictEqual(credentialErrors, [
+              'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+            ]);
+            const providerErrors = [];
+            let providerCalls = 0;
+            return sample.runCli(liveEnv, function(message) {
+              providerErrors.push(message);
+            }, function() {
+              return {
+                logLevel: null,
+                messages: {
+                  create: async function() {
+                    providerCalls += 1;
+                    throw new Error('provider response included auth-token-secret');
+                  }
                 }
-              }
-            };
-          }).then((providerExitCode) => {
-            assert.strictEqual(providerExitCode, 1);
-            assert.strictEqual(providerCalls, 1);
-            assert.deepStrictEqual(providerErrors, ['Twilio request failed.']);
+              };
+            }).then((providerExitCode) => {
+              assert.strictEqual(providerExitCode, 1);
+              assert.strictEqual(providerCalls, 1);
+              assert.deepStrictEqual(providerErrors, ['Twilio request failed.']);
+            });
           });
         });
       });

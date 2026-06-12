@@ -34,8 +34,27 @@ for path in \
   "docs/plans/2026-06-10-ci-runtime-matrix.md" \
   "docs/plans/2026-06-10-cli-output-privacy.md" \
   "docs/plans/2026-06-10-python-cli-error-allowlist.md" \
+  "docs/plans/2026-06-12-e164-phone-validation.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for e164_contract in \
+  'E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")' \
+  'validate_phone(payload["to"], "TWILIO_TO")' \
+  'validate_phone(payload["from"], "TWILIO_FROM")' \
+  'const E164_PHONE_PATTERN = /^\+[1-9][0-9]{1,14}$/;' \
+  "validatePhone(payload.to, 'TWILIO_TO')" \
+  "validatePhone(payload.from, 'TWILIO_FROM')" \
+  "test_phone_settings_must_use_e164" \
+  "TWILIO_TO must be an E.164 phone number"; do
+  if ! grep -Fq -- "$e164_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$e164_contract" "$ROOT_DIR/test.js" && \
+     ! grep -Fq -- "$e164_contract" "$ROOT_DIR/tests/test_company_comms.py" && \
+     ! grep -Fq -- "$e164_contract" "$ROOT_DIR/tests/test_js_contracts.js"; then
+    printf '%s\n' "E.164 phone validation contract is missing: $e164_contract" >&2
+    exit 1
+  fi
 done
 
 for python_privacy_contract in \

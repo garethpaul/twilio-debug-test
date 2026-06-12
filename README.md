@@ -44,7 +44,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
-  Message bodies are limited to 1600 characters in both samples.
+  Sender and recipient values must use E.164 form (`+` followed by 2-15 ASCII
+  digits with a nonzero first digit). Message bodies are limited to 1600
+  characters in both samples.
 - Python message arguments fall back to environment settings only when omitted;
   explicit blank recipients, senders, and bodies fail validation before dry-run
   output or live client setup.
@@ -91,7 +93,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   through the exported runner, including combined missing message-setting and
   credential reporting, generic provider-error handling, and resource-ID
   redaction. Python and Node.js tests also require oversized message
-  bodies to fail before dry-run output or live Twilio client setup.
+  bodies and malformed phone values to fail before dry-run output or live
+  Twilio client setup.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 
@@ -136,6 +139,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   contract.
 - See `docs/plans/2026-06-12-python-explicit-message-overrides.md` for the
   explicit Python argument precedence boundary.
+- See `docs/plans/2026-06-12-e164-phone-validation.md` for shared sender and
+  recipient format validation.
 
 ## Contributing
 

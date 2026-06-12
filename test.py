@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 import sys
 
 TWILIO_LOG_LEVELS = {
@@ -12,6 +13,7 @@ TWILIO_LOG_LEVELS = {
     "silent": logging.CRITICAL + 10,
 }
 MAX_MESSAGE_BODY_LENGTH = 1600
+E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")
 
 
 class MessageValidationError(ValueError):
@@ -83,6 +85,8 @@ class CompanyComms:
             raise MessageValidationError(
                 "Missing required Twilio message settings: " + ", ".join(missing)
             )
+        validate_phone(payload["to"], "TWILIO_TO")
+        validate_phone(payload["from"], "TWILIO_FROM")
         if len(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
             raise MessageValidationError(
                 "Twilio message body must be %d characters or fewer."
@@ -114,6 +118,13 @@ def message_setting(override, env, name):
     if override is None:
         return setting_value(env.get(name))
     return setting_value(override)
+
+
+def validate_phone(value, name):
+    if not E164_PHONE_PATTERN.fullmatch(value):
+        raise MessageValidationError(
+            "{} must be an E.164 phone number.".format(name)
+        )
 
 
 def redact_phone(value):

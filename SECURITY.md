@@ -41,6 +41,8 @@ Helpful reports include:
   types; provider-controlled message prefixes are never trusted.
 - Explicit blank Python message arguments must fail validation instead of
   falling back to an environment recipient, sender, or body.
+- Python and Node.js sender and recipient settings must pass the shared E.164
+  shape check before dry-run output or live Twilio client construction.
 
 ## Service and API Notes
 

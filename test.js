@@ -1,4 +1,5 @@
 const MAX_MESSAGE_BODY_LENGTH = 1600;
+const E164_PHONE_PATTERN = /^\+[1-9][0-9]{1,14}$/;
 
 class MessageValidationError extends Error {}
 class CredentialValidationError extends Error {}
@@ -53,6 +54,12 @@ function cliErrorMessage(error) {
   return 'Twilio request failed.';
 }
 
+function validatePhone(value, name) {
+  if (!E164_PHONE_PATTERN.test(value)) {
+    throw new MessageValidationError(name + ' must be an E.164 phone number.');
+  }
+}
+
 function createMessagePayload(env) {
   env = env || process.env;
   const missingMessageSettings = missingSettings(env, [
@@ -71,6 +78,8 @@ function createMessagePayload(env) {
     to: settingValue(env.TWILIO_TO),
     body: settingValue(env.TWILIO_BODY)
   };
+  validatePhone(payload.to, 'TWILIO_TO');
+  validatePhone(payload.from, 'TWILIO_FROM');
   if (payload.body.length > MAX_MESSAGE_BODY_LENGTH) {
     throw new MessageValidationError(
       'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH + ' characters or fewer.'
