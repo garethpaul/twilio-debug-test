@@ -1,6 +1,6 @@
 # Python Dependency Manifest
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -70,3 +70,33 @@ hosted matrix, documentation, and completed verification record.
 - Do not claim a fully hash-locked transitive dependency graph; this change
   pins the direct runtime and audit tool inputs and verifies their resolved
   environment.
+
+## Work Completed
+
+- Pinned `twilio==9.10.9`, `pip==26.1.2`, and `pip-audit==2.10.0` in separate
+  runtime and audit manifests.
+- Added an isolated temporary-venv gate that removes `PYTHONPATH`, installs the
+  manifests, verifies the Twilio distribution version and import, checks the
+  resolved environment, and audits the runtime manifest.
+- Integrated the package gate into canonical `make check` while preserving the
+  existing Python/Node behavior suites, hosted matrix, and external-directory
+  validation.
+- Extended shell and Python contracts plus security, maintenance, and roadmap
+  documentation for the pinned package boundary.
+
+## Verification
+
+- The focused Python suite passed 26 tests with `PYTHONPATH` removed, and the
+  Node.js contract suite passed without live Twilio requests.
+- The isolated Python 3.12.12 package gate completed under a 240-second hard
+  timeout: `twilio==9.10.9` installed and imported, `pip check` reported no
+  broken requirements, and `pip-audit` reported no known vulnerabilities.
+- Full repository and external-working-directory `make check` passed under
+  explicit hard timeouts, including the package gate and all existing behavior
+  and baseline contracts.
+- Focused hostile mutations for package pins, environment isolation,
+  version/import verification, dependency checking, auditing, Make integration,
+  documentation, and completed plan status were rejected.
+- Shell syntax, Python compilation, workflow parsing, intended-path,
+  generated-artifact, `git diff --check`, and changed-line secret audits passed
+  before shipment.
