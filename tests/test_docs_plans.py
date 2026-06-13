@@ -13,6 +13,9 @@ CI_BASELINE_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 CI_RUNTIME_MATRIX_PLAN = DOCS_PLANS / "2026-06-10-ci-runtime-matrix.md"
 CLI_OUTPUT_PRIVACY_PLAN = DOCS_PLANS / "2026-06-10-cli-output-privacy.md"
 E164_PHONE_VALIDATION_PLAN = DOCS_PLANS / "2026-06-12-e164-phone-validation.md"
+LIVE_RECIPIENT_CONFIRMATION_PLAN = (
+    DOCS_PLANS / "2026-06-13-live-recipient-confirmation.md"
+)
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -28,6 +31,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(CI_RUNTIME_MATRIX_PLAN, plans)
         self.assertIn(CLI_OUTPUT_PRIVACY_PLAN, plans)
         self.assertIn(E164_PHONE_VALIDATION_PLAN, plans)
+        self.assertIn(LIVE_RECIPIENT_CONFIRMATION_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")

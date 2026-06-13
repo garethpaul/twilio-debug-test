@@ -71,6 +71,19 @@ function validateCredentials(accountSid, authToken) {
   }
 }
 
+function validateLiveRecipient(env, toNumber) {
+  const confirmation = settingValue(env.TWILIO_CONFIRM_TO);
+  if (!confirmation) {
+    throw new MessageValidationError(
+      'Missing required live recipient confirmation: TWILIO_CONFIRM_TO'
+    );
+  }
+  validatePhone(confirmation, 'TWILIO_CONFIRM_TO');
+  if (confirmation !== toNumber) {
+    throw new MessageValidationError('TWILIO_CONFIRM_TO must match TWILIO_TO.');
+  }
+}
+
 function createMessagePayload(env) {
   env = env || process.env;
   const missingMessageSettings = missingSettings(env, [
@@ -113,6 +126,8 @@ async function sendMessage(env, clientFactory) {
     console.log(JSON.stringify(result));
     return result;
   }
+
+  validateLiveRecipient(env, payload.to);
 
   const missingCredentials = missingSettings(env, [
     'TWILIO_ACCOUNT_SID',

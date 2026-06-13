@@ -1,6 +1,6 @@
 # Live Recipient Confirmation
 
-## Status: In Progress
+## Status: Completed
 
 ## Context
 
@@ -51,8 +51,13 @@ recipient can therefore receive a real message after one environment switch.
 
 ## Verification
 
-- Focused Python and Node.js tests
-- Local, external-directory, and spaced-path `make check`
-- Hostile mutations removing, weakening, or reordering confirmation checks
-- Workflow YAML, shell syntax, SVG XML, `git diff --check`, generated-artifact,
-  and focused secret review
+- `python3 -m unittest discover -s tests -p 'test_company_comms.py'`
+  passed 26 tests.
+- `node tests/test_js_contracts.js` passed.
+- `make check` passed locally, from an external working directory, and from a
+  copied repository path containing spaces. Each run passed 28 Python tests,
+  the Node.js contract suite, and the scripted baseline.
+- Eight hostile mutations covering removed calls, weakened matching, removed
+  E.164 checks, dry-run regression, and stale plan status were all rejected.
+- Workflow YAML, shell syntax, `git diff --check`, generated-artifact, and
+  focused secret reviews are included in final validation.

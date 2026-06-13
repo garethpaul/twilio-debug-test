@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Required a separate E.164 `TWILIO_CONFIRM_TO` value matching the normalized
+  recipient before live-send credential or client setup in both runtimes.
+- Added fail-closed ordering, dry-run independence, normalization, and safe CLI
+  coverage for the live-recipient confirmation boundary.
 - Required live-mode Account SIDs and auth tokens to match their canonical
   ASCII hexadecimal shapes before either Twilio client factory runs.
 - Added cross-runtime boundary, ordering, dry-run, and CLI privacy coverage for

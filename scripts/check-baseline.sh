@@ -36,6 +36,7 @@ for path in \
   "docs/plans/2026-06-10-python-cli-error-allowlist.md" \
   "docs/plans/2026-06-12-e164-phone-validation.md" \
   "docs/plans/2026-06-13-twilio-credential-shapes.md" \
+  "docs/plans/2026-06-13-live-recipient-confirmation.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -72,6 +73,59 @@ for relative_path, validation, client_setup in ordering_contracts:
     if source.index(validation) >= source.index(client_setup):
         raise SystemExit(
             "{} must validate credential shapes before client setup.".format(relative_path)
+        )
+PY
+
+for confirmation_contract in \
+  'validate_live_recipient(self.env, payload["to"])' \
+  'confirmation = setting_value(env.get("TWILIO_CONFIRM_TO"))' \
+  'validate_phone(confirmation, "TWILIO_CONFIRM_TO")' \
+  'validateLiveRecipient(env, payload.to);' \
+  'const confirmation = settingValue(env.TWILIO_CONFIRM_TO);' \
+  "validatePhone(confirmation, 'TWILIO_CONFIRM_TO')" \
+  'TWILIO_CONFIRM_TO must match TWILIO_TO.' \
+  'test_live_send_requires_matching_recipient_confirmation_before_client_setup' \
+  'invalid live recipient confirmation must reject'; do
+  if ! grep -Fq -- "$confirmation_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$confirmation_contract" "$ROOT_DIR/test.js" && \
+     ! grep -Fq -- "$confirmation_contract" "$ROOT_DIR/tests/test_company_comms.py" && \
+     ! grep -Fq -- "$confirmation_contract" "$ROOT_DIR/tests/test_js_contracts.js"; then
+    printf '%s\n' "Live recipient confirmation contract is missing: $confirmation_contract" >&2
+    exit 1
+  fi
+done
+
+python3 - "$ROOT_DIR" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+ordering_contracts = (
+    (
+        "test.py",
+        "if not should_send_live(self.env):",
+        'validate_live_recipient(self.env, payload["to"])',
+        "missing = [",
+        "client_factory = self.client_factory",
+    ),
+    (
+        "test.js",
+        "if (!shouldSendLive(env)) {",
+        "validateLiveRecipient(env, payload.to);",
+        "const missingCredentials = missingSettings",
+        "const createClient = clientFactory",
+    ),
+)
+for relative_path, dry_run, confirmation, credentials, client_setup in ordering_contracts:
+    source = (root / relative_path).read_text(encoding="utf-8")
+    positions = tuple(
+        source.index(marker)
+        for marker in (dry_run, confirmation, credentials, client_setup)
+    )
+    if positions != tuple(sorted(positions)):
+        raise SystemExit(
+            "{} must confirm the live recipient after the dry-run branch and "
+            "before credential or client setup.".format(relative_path)
         )
 PY
 

@@ -214,6 +214,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_TO": "+12025550123",
             "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "hello",
@@ -226,6 +227,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         valid_env = {
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
             "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
             "TWILIO_TO": "+12025550123",
@@ -271,6 +273,7 @@ class CompanyCommsTest(unittest.TestCase):
         comms = sample.CompanyComms(env={
             "TWILIO_ACCOUNT_SID": "not-an-account-sid",
             "TWILIO_AUTH_TOKEN": "not-an-auth-token",
+            "TWILIO_CONFIRM_TO": "not-a-phone",
             "TWILIO_TO": "+12025550123",
             "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "hello",
@@ -290,6 +293,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
             "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
             "TWILIO_TO": "+12025550123",
@@ -304,6 +308,56 @@ class CompanyCommsTest(unittest.TestCase):
             FakeTwilioClient.instances[0].http_client.logger.level,
             logging.INFO,
         )
+
+    def test_live_send_requires_matching_recipient_confirmation_before_client_setup(self):
+        sample = load_sample()
+        base_env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+        invalid_confirmations = (
+            ({}, "Missing required live recipient confirmation"),
+            ({"TWILIO_CONFIRM_TO": "not-a-phone"}, "must be an E.164 phone number"),
+            ({"TWILIO_CONFIRM_TO": "+12025550125"}, "must match TWILIO_TO"),
+        )
+
+        for override, expected_error in invalid_confirmations:
+            with self.subTest(override=override):
+                env = dict(base_env)
+                env.update(override)
+                comms = sample.CompanyComms(
+                    env=env,
+                    client_factory=FakeTwilioClient,
+                )
+
+                with self.assertRaisesRegex(
+                    sample.MessageValidationError,
+                    expected_error,
+                ):
+                    comms.send_msg()
+
+        self.assertEqual(FakeTwilioClient.instances, [])
+
+    def test_live_send_accepts_whitespace_normalized_recipient_confirmation(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "  +12025550123  ",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }, client_factory=FakeTwilioClient)
+
+        message = comms.send_msg()
+
+        self.assertEqual(message.sid, "SM123")
+        self.assertEqual(len(FakeTwilioClient.instances), 1)
 
     def test_python_live_send_log_level_requires_supported_opt_in(self):
         sample = load_sample()
@@ -350,6 +404,27 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(
             stderr.getvalue(),
             "TWILIO_TO must be an E.164 phone number.\n",
+        )
+        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_main_reports_missing_live_recipient_confirmation_without_traceback(self):
+        sample = load_sample()
+        stderr = io.StringIO()
+        env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+
+        with mock.patch.dict(sample.os.environ, env, clear=True):
+            with redirect_stderr(stderr):
+                exit_code = sample.main()
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            stderr.getvalue(),
+            "Missing required live recipient confirmation: TWILIO_CONFIRM_TO\n",
         )
         self.assertNotIn("Traceback", stderr.getvalue())
 
