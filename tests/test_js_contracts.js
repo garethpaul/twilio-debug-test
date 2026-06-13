@@ -4,6 +4,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const sample = require('../test.js');
+const VALID_ACCOUNT_SID = 'AC' + '0123456789abcdef'.repeat(2);
+const VALID_AUTH_TOKEN = '0123456789abcdef'.repeat(2);
 
 const preloadDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'twilio-debug-cli-'));
 const preloadPath = path.join(preloadDirectory, 'before-exit.js');
@@ -160,14 +162,68 @@ sample.sendMessage(env).then((result) => {
   assert.strictEqual(result.to, '********0123');
   assert.strictEqual(result.from, '********0124');
   assert.strictEqual(result.bodyLength, 15);
+  let dryRunFactoryCalls = 0;
+  return sample.sendMessage({
+    TWILIO_ACCOUNT_SID: 'not-an-account-sid',
+    TWILIO_AUTH_TOKEN: 'not-an-auth-token',
+    TWILIO_TO: '+12025550123',
+    TWILIO_FROM: '+12025550124',
+    TWILIO_BODY: 'dry run'
+  }, function() {
+    dryRunFactoryCalls += 1;
+  }).then((dryRunResult) => {
+    assert.strictEqual(dryRunResult.dryRun, true);
+    assert.strictEqual(dryRunFactoryCalls, 0);
+
+    const validCredentials = {
+      TWILIO_SEND_LIVE: 'true',
+      TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
+      TWILIO_TO: '+12025550123',
+      TWILIO_FROM: '+12025550124',
+      TWILIO_BODY: 'live body'
+    };
+    const invalidCredentials = [
+      ['TWILIO_ACCOUNT_SID', 'SK' + VALID_ACCOUNT_SID.slice(2)],
+      ['TWILIO_ACCOUNT_SID', VALID_ACCOUNT_SID.slice(0, -1)],
+      ['TWILIO_ACCOUNT_SID', VALID_ACCOUNT_SID + '0'],
+      ['TWILIO_ACCOUNT_SID', VALID_ACCOUNT_SID.slice(0, -1) + 'G'],
+      ['TWILIO_ACCOUNT_SID', 'AC０' + VALID_ACCOUNT_SID.slice(3, -1)],
+      ['TWILIO_AUTH_TOKEN', VALID_AUTH_TOKEN.slice(0, -1)],
+      ['TWILIO_AUTH_TOKEN', VALID_AUTH_TOKEN + '0'],
+      ['TWILIO_AUTH_TOKEN', VALID_AUTH_TOKEN.slice(0, -1) + 'G'],
+      ['TWILIO_AUTH_TOKEN', '０' + VALID_AUTH_TOKEN.slice(1, -1)]
+    ];
+    let invalidFactoryCalls = 0;
+
+    return invalidCredentials.reduce((promise, invalidCredential) => {
+      return promise.then(() => {
+        const invalidEnv = Object.assign({}, validCredentials);
+        invalidEnv[invalidCredential[0]] = invalidCredential[1];
+        return sample.sendMessage(invalidEnv, function() {
+          invalidFactoryCalls += 1;
+        }).then(() => {
+          assert.fail('malformed credentials must reject');
+        }, (error) => {
+          assert(error instanceof sample.CredentialValidationError);
+          assert.strictEqual(
+            error.message,
+            invalidCredential[0] + ' has an invalid format.'
+          );
+        });
+      });
+    }, Promise.resolve()).then(() => {
+      assert.strictEqual(invalidFactoryCalls, 0);
+    });
+  }).then(() => {
   let createdClient;
   let seenAccountSid;
   let seenAuthToken;
   let seenPayload;
   const liveEnv = {
     TWILIO_SEND_LIVE: 'true',
-    TWILIO_ACCOUNT_SID: 'AC123',
-    TWILIO_AUTH_TOKEN: 'secret',
+    TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
     TWILIO_TO: '+12025550123',
     TWILIO_FROM: '+12025550124',
     TWILIO_BODY: 'live body'
@@ -191,8 +247,8 @@ sample.sendMessage(env).then((result) => {
     };
     return createdClient;
   }).then((message) => {
-    assert.strictEqual(seenAccountSid, 'AC123');
-    assert.strictEqual(seenAuthToken, 'secret');
+    assert.strictEqual(seenAccountSid, VALID_ACCOUNT_SID);
+    assert.strictEqual(seenAuthToken, VALID_AUTH_TOKEN);
     assert.strictEqual(createdClient.logLevel, 'info');
     assert.deepStrictEqual(seenPayload, {
       from: '+12025550124',
@@ -277,6 +333,7 @@ sample.sendMessage(env).then((result) => {
   }).catch((error) => {
     console.log = originalConsoleLog;
     throw error;
+  });
   });
 }).catch((error) => {
   console.error(error);

@@ -1,5 +1,7 @@
 const MAX_MESSAGE_BODY_LENGTH = 1600;
 const E164_PHONE_PATTERN = /^\+[1-9][0-9]{1,14}$/;
+const ACCOUNT_SID_PATTERN = /^AC[0-9A-Fa-f]{32}$/;
+const AUTH_TOKEN_PATTERN = /^[0-9A-Fa-f]{32}$/;
 
 class MessageValidationError extends Error {}
 class CredentialValidationError extends Error {}
@@ -60,6 +62,15 @@ function validatePhone(value, name) {
   }
 }
 
+function validateCredentials(accountSid, authToken) {
+  if (!ACCOUNT_SID_PATTERN.test(accountSid)) {
+    throw new CredentialValidationError('TWILIO_ACCOUNT_SID has an invalid format.');
+  }
+  if (!AUTH_TOKEN_PATTERN.test(authToken)) {
+    throw new CredentialValidationError('TWILIO_AUTH_TOKEN has an invalid format.');
+  }
+}
+
 function createMessagePayload(env) {
   env = env || process.env;
   const missingMessageSettings = missingSettings(env, [
@@ -115,6 +126,7 @@ async function sendMessage(env, clientFactory) {
 
   const accountSid = settingValue(env.TWILIO_ACCOUNT_SID);
   const authToken = settingValue(env.TWILIO_AUTH_TOKEN);
+  validateCredentials(accountSid, authToken);
   const createClient = clientFactory || require('twilio');
   const client = createClient(accountSid, authToken);
   client.logLevel = twilioLogLevel(env);

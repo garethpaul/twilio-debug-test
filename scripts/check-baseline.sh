@@ -35,9 +35,45 @@ for path in \
   "docs/plans/2026-06-10-cli-output-privacy.md" \
   "docs/plans/2026-06-10-python-cli-error-allowlist.md" \
   "docs/plans/2026-06-12-e164-phone-validation.md" \
+  "docs/plans/2026-06-13-twilio-credential-shapes.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+for credential_contract in \
+  'ACCOUNT_SID_PATTERN = re.compile(r"^AC[0-9A-Fa-f]{32}$")' \
+  'AUTH_TOKEN_PATTERN = re.compile(r"^[0-9A-Fa-f]{32}$")' \
+  'const ACCOUNT_SID_PATTERN = /^AC[0-9A-Fa-f]{32}$/;' \
+  'const AUTH_TOKEN_PATTERN = /^[0-9A-Fa-f]{32}$/;' \
+  'validate_credentials(account_sid, auth_token)' \
+  'validateCredentials(accountSid, authToken)' \
+  'test_live_send_rejects_malformed_credentials_before_client_setup' \
+  'malformed credentials must reject'; do
+  if ! grep -Fq -- "$credential_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$credential_contract" "$ROOT_DIR/test.js" && \
+     ! grep -Fq -- "$credential_contract" "$ROOT_DIR/tests/test_company_comms.py" && \
+     ! grep -Fq -- "$credential_contract" "$ROOT_DIR/tests/test_js_contracts.js"; then
+    printf '%s\n' "Twilio credential shape contract is missing: $credential_contract" >&2
+    exit 1
+  fi
+done
+
+python3 - "$ROOT_DIR" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+ordering_contracts = (
+    ("test.py", "validate_credentials(account_sid, auth_token)", "client_factory = self.client_factory"),
+    ("test.js", "validateCredentials(accountSid, authToken);", "const createClient = clientFactory"),
+)
+for relative_path, validation, client_setup in ordering_contracts:
+    source = (root / relative_path).read_text(encoding="utf-8")
+    if source.index(validation) >= source.index(client_setup):
+        raise SystemExit(
+            "{} must validate credential shapes before client setup.".format(relative_path)
+        )
+PY
 
 for e164_contract in \
   'E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")' \

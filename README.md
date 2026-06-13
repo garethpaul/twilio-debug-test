@@ -44,6 +44,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
+  Live mode requires an Account SID with `AC` plus 32 ASCII hexadecimal
+  characters and an auth token with exactly 32 ASCII hexadecimal characters;
+  both shapes are checked before Twilio client construction. This local shape
+  check does not prove that credentials are active or authorized.
   Sender and recipient values must use E.164 form (`+` followed by 2-15 ASCII
   digits with a nonzero first digit). Message bodies are limited to 1600
   characters in both samples.
@@ -94,7 +98,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   credential reporting, generic provider-error handling, and resource-ID
   redaction. Python and Node.js tests also require oversized message
   bodies and malformed phone values to fail before dry-run output or live
-  Twilio client setup.
+  Twilio client setup. Live-mode credential tests require exact ASCII
+  hexadecimal lengths, reject malformed values before fake client factories
+  run, and confirm that dry-run mode remains credential-free.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 
@@ -141,6 +147,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   explicit Python argument precedence boundary.
 - See `docs/plans/2026-06-12-e164-phone-validation.md` for shared sender and
   recipient format validation.
+- See `docs/plans/2026-06-13-twilio-credential-shapes.md` for fail-fast Account
+  SID and auth-token shape validation.
 
 ## Contributing
 

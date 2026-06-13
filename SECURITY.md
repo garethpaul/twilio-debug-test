@@ -43,6 +43,9 @@ Helpful reports include:
   falling back to an environment recipient, sender, or body.
 - Python and Node.js sender and recipient settings must pass the shared E.164
   shape check before dry-run output or live Twilio client construction.
+- Live mode requires the canonical Account SID and auth-token ASCII hexadecimal
+  shapes before client construction. This rejects malformed local
+  configuration but does not establish credential validity or authorization.
 
 ## Service and API Notes
 
