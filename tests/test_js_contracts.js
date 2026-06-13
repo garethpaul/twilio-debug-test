@@ -157,7 +157,54 @@ assert.deepStrictEqual(sample.createMessagePayload({
   });
 });
 
-sample.sendMessage(env).then((result) => {
+const liveConfirmationBase = {
+  TWILIO_SEND_LIVE: 'true',
+  TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
+  TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
+  TWILIO_TO: '+12025550123',
+  TWILIO_FROM: '+12025550124',
+  TWILIO_BODY: 'live body'
+};
+const invalidConfirmations = [
+  [{}, /Missing required live recipient confirmation/],
+  [{ TWILIO_CONFIRM_TO: 'not-a-phone' }, /must be an E\.164 phone number/],
+  [{ TWILIO_CONFIRM_TO: '+12025550125' }, /must match TWILIO_TO/]
+];
+let confirmationFactoryCalls = 0;
+const confirmationChecks = invalidConfirmations.reduce((promise, confirmationCase) => {
+  return promise.then(() => {
+    const confirmationEnv = Object.assign({}, liveConfirmationBase, confirmationCase[0]);
+    return sample.sendMessage(confirmationEnv, function() {
+      confirmationFactoryCalls += 1;
+    }).then(() => {
+      assert.fail('invalid live recipient confirmation must reject');
+    }, (error) => {
+      assert(error instanceof sample.MessageValidationError);
+      assert.match(error.message, confirmationCase[1]);
+    });
+  });
+}, Promise.resolve()).then(() => {
+  assert.strictEqual(confirmationFactoryCalls, 0);
+  const confirmedEnv = Object.assign({}, liveConfirmationBase, {
+    TWILIO_CONFIRM_TO: '  +12025550123  '
+  });
+  return sample.sendMessage(confirmedEnv, function() {
+    confirmationFactoryCalls += 1;
+    return {
+      logLevel: null,
+      messages: {
+        create: async function() {
+          return { sid: 'SMCONFIRMED' };
+        }
+      }
+    };
+  }).then((message) => {
+    assert.strictEqual(message.sid, 'SMCONFIRMED');
+    assert.strictEqual(confirmationFactoryCalls, 1);
+  });
+});
+
+confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   assert.strictEqual(result.dryRun, true);
   assert.strictEqual(result.to, '********0123');
   assert.strictEqual(result.from, '********0124');
@@ -166,6 +213,7 @@ sample.sendMessage(env).then((result) => {
   return sample.sendMessage({
     TWILIO_ACCOUNT_SID: 'not-an-account-sid',
     TWILIO_AUTH_TOKEN: 'not-an-auth-token',
+    TWILIO_CONFIRM_TO: 'not-a-phone',
     TWILIO_TO: '+12025550123',
     TWILIO_FROM: '+12025550124',
     TWILIO_BODY: 'dry run'
@@ -177,6 +225,7 @@ sample.sendMessage(env).then((result) => {
 
     const validCredentials = {
       TWILIO_SEND_LIVE: 'true',
+      TWILIO_CONFIRM_TO: '+12025550123',
       TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
       TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
       TWILIO_TO: '+12025550123',
@@ -222,6 +271,7 @@ sample.sendMessage(env).then((result) => {
   let seenPayload;
   const liveEnv = {
     TWILIO_SEND_LIVE: 'true',
+    TWILIO_CONFIRM_TO: '+12025550123',
     TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
     TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
     TWILIO_TO: '+12025550123',
@@ -294,37 +344,53 @@ sample.sendMessage(env).then((result) => {
             'TWILIO_TO must be an E.164 phone number.'
           ]);
 
-          const credentialErrors = [];
+          const confirmationErrors = [];
           return sample.runCli({
             TWILIO_SEND_LIVE: 'true',
             TWILIO_FROM: '+12025550124',
             TWILIO_TO: '+12025550123',
             TWILIO_BODY: 'live body'
           }, function(message) {
-            credentialErrors.push(message);
-          }).then((credentialExitCode) => {
-            assert.strictEqual(credentialExitCode, 1);
-            assert.deepStrictEqual(credentialErrors, [
-              'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+            confirmationErrors.push(message);
+          }).then((confirmationExitCode) => {
+            assert.strictEqual(confirmationExitCode, 1);
+            assert.deepStrictEqual(confirmationErrors, [
+              'Missing required live recipient confirmation: TWILIO_CONFIRM_TO'
             ]);
-            const providerErrors = [];
-            let providerCalls = 0;
-            return sample.runCli(liveEnv, function(message) {
-              providerErrors.push(message);
-            }, function() {
-              return {
-                logLevel: null,
-                messages: {
-                  create: async function() {
-                    providerCalls += 1;
-                    throw new Error('provider response included auth-token-secret');
+
+            const credentialErrors = [];
+            return sample.runCli({
+              TWILIO_SEND_LIVE: 'true',
+              TWILIO_CONFIRM_TO: '+12025550123',
+              TWILIO_FROM: '+12025550124',
+              TWILIO_TO: '+12025550123',
+              TWILIO_BODY: 'live body'
+            }, function(message) {
+              credentialErrors.push(message);
+            }).then((credentialExitCode) => {
+              assert.strictEqual(credentialExitCode, 1);
+              assert.deepStrictEqual(credentialErrors, [
+                'Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN'
+              ]);
+              const providerErrors = [];
+              let providerCalls = 0;
+              return sample.runCli(liveEnv, function(message) {
+                providerErrors.push(message);
+              }, function() {
+                return {
+                  logLevel: null,
+                  messages: {
+                    create: async function() {
+                      providerCalls += 1;
+                      throw new Error('provider response included auth-token-secret');
+                    }
                   }
-                }
-              };
-            }).then((providerExitCode) => {
-              assert.strictEqual(providerExitCode, 1);
-              assert.strictEqual(providerCalls, 1);
-              assert.deepStrictEqual(providerErrors, ['Twilio request failed.']);
+                };
+              }).then((providerExitCode) => {
+                assert.strictEqual(providerExitCode, 1);
+                assert.strictEqual(providerCalls, 1);
+                assert.deepStrictEqual(providerErrors, ['Twilio request failed.']);
+              });
             });
           });
         });

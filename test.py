@@ -50,6 +50,8 @@ class CompanyComms:
                 "body_length": len(payload["body"]),
             }
 
+        validate_live_recipient(self.env, payload["to"])
+
         missing = [
             name for name in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN")
             if not setting_value(self.env.get(name))
@@ -138,6 +140,17 @@ def validate_credentials(account_sid, auth_token):
         raise CredentialValidationError("TWILIO_ACCOUNT_SID has an invalid format.")
     if not AUTH_TOKEN_PATTERN.fullmatch(auth_token):
         raise CredentialValidationError("TWILIO_AUTH_TOKEN has an invalid format.")
+
+
+def validate_live_recipient(env, to_number):
+    confirmation = setting_value(env.get("TWILIO_CONFIRM_TO"))
+    if not confirmation:
+        raise MessageValidationError(
+            "Missing required live recipient confirmation: TWILIO_CONFIRM_TO"
+        )
+    validate_phone(confirmation, "TWILIO_CONFIRM_TO")
+    if confirmation != to_number:
+        raise MessageValidationError("TWILIO_CONFIRM_TO must match TWILIO_TO.")
 
 
 def redact_phone(value):

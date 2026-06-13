@@ -44,6 +44,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
+  Live mode also requires `TWILIO_CONFIRM_TO` to be a valid E.164 value that
+  exactly matches the normalized `TWILIO_TO` recipient. This separate
+  confirmation is checked before credentials or a Twilio client are used.
   Live mode requires an Account SID with `AC` plus 32 ASCII hexadecimal
   characters and an auth token with exactly 32 ASCII hexadecimal characters;
   both shapes are checked before Twilio client construction. This local shape
