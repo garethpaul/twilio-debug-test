@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-13
+
+- Required live-mode Account SIDs and auth tokens to match their canonical
+  ASCII hexadecimal shapes before either Twilio client factory runs.
+- Added cross-runtime boundary, ordering, dry-run, and CLI privacy coverage for
+  malformed credential configuration.
+
 ## 2026-06-12
 
 - Required Python and Node.js sender and recipient settings to use a trimmed

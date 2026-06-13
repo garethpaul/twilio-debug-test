@@ -8,6 +8,8 @@ from unittest import mock
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "test.py"
+VALID_ACCOUNT_SID = "AC" + "0123456789abcdef" * 2
+VALID_AUTH_TOKEN = "0123456789abcdef" * 2
 
 
 def load_sample():
@@ -220,6 +222,65 @@ class CompanyCommsTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN"):
             comms.sendMsg(None, None, None)
 
+    def test_live_send_rejects_malformed_credentials_before_client_setup(self):
+        sample = load_sample()
+        valid_env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+        invalid_credentials = {
+            "TWILIO_ACCOUNT_SID": (
+                "SK" + VALID_ACCOUNT_SID[2:],
+                VALID_ACCOUNT_SID[:-1],
+                VALID_ACCOUNT_SID + "0",
+                VALID_ACCOUNT_SID[:-1] + "G",
+                "AC０" + VALID_ACCOUNT_SID[3:-1],
+            ),
+            "TWILIO_AUTH_TOKEN": (
+                VALID_AUTH_TOKEN[:-1],
+                VALID_AUTH_TOKEN + "0",
+                VALID_AUTH_TOKEN[:-1] + "G",
+                "０" + VALID_AUTH_TOKEN[1:-1],
+            ),
+        }
+
+        for field, invalid_values in invalid_credentials.items():
+            for invalid_value in invalid_values:
+                with self.subTest(field=field, invalid_value=invalid_value):
+                    env = dict(valid_env)
+                    env[field] = invalid_value
+                    comms = sample.CompanyComms(
+                        env=env,
+                        client_factory=FakeTwilioClient,
+                    )
+
+                    with self.assertRaisesRegex(
+                        sample.CredentialValidationError,
+                        "{} has an invalid format".format(field),
+                    ):
+                        comms.send_msg()
+
+        self.assertEqual(FakeTwilioClient.instances, [])
+
+    def test_dry_run_ignores_malformed_credentials(self):
+        sample = load_sample()
+        comms = sample.CompanyComms(env={
+            "TWILIO_ACCOUNT_SID": "not-an-account-sid",
+            "TWILIO_AUTH_TOKEN": "not-an-auth-token",
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }, client_factory=FakeTwilioClient)
+
+        result = comms.send_msg()
+
+        self.assertTrue(result["dry_run"])
+        self.assertEqual(FakeTwilioClient.instances, [])
+
     def test_live_send_flag_allows_surrounding_whitespace(self):
         sample = load_sample()
 
@@ -229,8 +290,8 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
-            "TWILIO_ACCOUNT_SID": "AC123",
-            "TWILIO_AUTH_TOKEN": "secret",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
             "TWILIO_TO": "+12025550123",
             "TWILIO_FROM": "+12025550124",
             "TWILIO_BODY": "hello",
@@ -326,6 +387,17 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(
             sample.cli_error_message(error),
             "Missing required Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN",
+        )
+
+    def test_cli_error_message_preserves_credential_format_errors(self):
+        sample = load_sample()
+        error = sample.CredentialValidationError(
+            "TWILIO_ACCOUNT_SID has an invalid format."
+        )
+
+        self.assertEqual(
+            sample.cli_error_message(error),
+            "TWILIO_ACCOUNT_SID has an invalid format.",
         )
 
     def test_main_hides_unexpected_provider_error_details(self):

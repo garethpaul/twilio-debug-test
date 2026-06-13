@@ -14,6 +14,8 @@ TWILIO_LOG_LEVELS = {
 }
 MAX_MESSAGE_BODY_LENGTH = 1600
 E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")
+ACCOUNT_SID_PATTERN = re.compile(r"^AC[0-9A-Fa-f]{32}$")
+AUTH_TOKEN_PATTERN = re.compile(r"^[0-9A-Fa-f]{32}$")
 
 
 class MessageValidationError(ValueError):
@@ -57,14 +59,18 @@ class CompanyComms:
                 "Missing required Twilio credentials: " + ", ".join(missing)
             )
 
+        account_sid = setting_value(self.env.get("TWILIO_ACCOUNT_SID"))
+        auth_token = setting_value(self.env.get("TWILIO_AUTH_TOKEN"))
+        validate_credentials(account_sid, auth_token)
+
         client_factory = self.client_factory
         if client_factory is None:
             from twilio.rest import Client
             client_factory = Client
 
         client = client_factory(
-            setting_value(self.env.get("TWILIO_ACCOUNT_SID")),
-            setting_value(self.env.get("TWILIO_AUTH_TOKEN")),
+            account_sid,
+            auth_token,
         )
         client.http_client.logger.setLevel(twilio_log_level(self.env))
 
@@ -125,6 +131,13 @@ def validate_phone(value, name):
         raise MessageValidationError(
             "{} must be an E.164 phone number.".format(name)
         )
+
+
+def validate_credentials(account_sid, auth_token):
+    if not ACCOUNT_SID_PATTERN.fullmatch(account_sid):
+        raise CredentialValidationError("TWILIO_ACCOUNT_SID has an invalid format.")
+    if not AUTH_TOKEN_PATTERN.fullmatch(auth_token):
+        raise CredentialValidationError("TWILIO_AUTH_TOKEN has an invalid format.")
 
 
 def redact_phone(value):

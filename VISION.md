@@ -28,6 +28,7 @@ Priority:
 - Keep a scriptable baseline guard for required files and maintenance metadata
 - Report missing Node.js message settings together before sample send setup
 - Report missing Twilio live-send credentials together before client setup
+- Reject malformed Account SID and auth-token shapes before client setup
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients
