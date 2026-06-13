@@ -1,4 +1,4 @@
-.PHONY: build check lint test verify
+.PHONY: build check lint package-check test verify
 
 ROOT := $(CURDIR)
 PYTHON ?= python3
@@ -17,5 +17,8 @@ build: lint
 
 verify: lint test build
 
-check: verify
+package-check:
+	PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"
+
+check: verify package-check
 	"$(ROOT)/scripts/check-baseline.sh"

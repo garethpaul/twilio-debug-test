@@ -40,10 +40,12 @@ Priority:
 - Allowlist sample-owned Node.js validation exceptions instead of message prefixes
 - Keep the Python and Node.js compatibility matrix enforced in hosted CI
 - Keep hosted checks unfiltered across branches and independent of caller paths
+- Keep the Python Twilio runtime and package-audit inputs pinned and exercised
+  by the canonical gate
 
 Next priorities:
 
-- Add language-specific dependency manifests
+- Add a Node.js dependency manifest
 - Add setup notes for each language sample
 - Add deeper redaction examples for shared debug logs
 

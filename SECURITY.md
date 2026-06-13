@@ -57,6 +57,11 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
+The Python sample pins its direct Twilio runtime dependency and the pip/pip-audit
+tool inputs. `make check` installs them in an isolated temporary environment,
+checks the resolved dependency set, and audits the runtime manifest without
+using Twilio credentials or making a live API request.
+
 ## Safe Research Guidelines
 
 Good-faith research is welcome when it stays within these boundaries:

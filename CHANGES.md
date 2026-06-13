@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Added pinned Python Twilio, pip, and pip-audit manifests plus an isolated
+  install, import, dependency-consistency, and vulnerability gate.
 - Required a separate E.164 `TWILIO_CONFIRM_TO` value matching the normalized
   recipient before live-send credential or client setup in both runtimes.
 - Added fail-closed ordering, dry-run independence, normalization, and safe CLI

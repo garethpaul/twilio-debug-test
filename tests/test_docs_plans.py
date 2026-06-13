@@ -16,6 +16,9 @@ E164_PHONE_VALIDATION_PLAN = DOCS_PLANS / "2026-06-12-e164-phone-validation.md"
 LIVE_RECIPIENT_CONFIRMATION_PLAN = (
     DOCS_PLANS / "2026-06-13-live-recipient-confirmation.md"
 )
+PYTHON_DEPENDENCY_MANIFEST_PLAN = (
+    DOCS_PLANS / "2026-06-13-python-dependency-manifest.md"
+)
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -32,6 +35,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(CLI_OUTPUT_PRIVACY_PLAN, plans)
         self.assertIn(E164_PHONE_VALIDATION_PLAN, plans)
         self.assertIn(LIVE_RECIPIENT_CONFIRMATION_PLAN, plans)
+        self.assertIn(PYTHON_DEPENDENCY_MANIFEST_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
@@ -42,6 +46,10 @@ class DocsPlansTest(unittest.TestCase):
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 
         self.assertIn('"$(ROOT)/scripts/check-baseline.sh"', makefile)
+        self.assertIn(
+            'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"',
+            makefile,
+        )
 
 
 if __name__ == "__main__":

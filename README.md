@@ -19,8 +19,8 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 Additional scan context:
 
 - Source directories: no top-level source directories detected
-- Dependency and build manifests: none detected
-- Entry points or build surfaces: none detected
+- Dependency and build manifests: pinned Python runtime and audit requirements
+- Entry points or build surfaces: Makefile, Python, and Node.js samples
 - Test-looking files: test.js, test.py
 
 ## Getting Started
@@ -40,7 +40,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
-- Run `make check` to check the Python and Node.js samples.
+- Run `make check` to check the Python and Node.js samples and the isolated
+  Python package environment. The package gate installs the pinned runtime and
+  audit manifests, verifies `twilio==9.10.9`, runs `pip check`, and audits the
+  runtime manifest for known vulnerabilities.
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
@@ -91,6 +94,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   using pinned actions, read-only permissions, and credential-free checkout.
 - Each hosted matrix job reruns the full gate from a temporary working
   directory to enforce path-independent Makefile behavior.
+- `requirements.txt` pins the Python Twilio helper used by live sends;
+  `requirements-dev.txt` pins pip and pip-audit for the canonical package gate.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
@@ -152,6 +157,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
   recipient format validation.
 - See `docs/plans/2026-06-13-twilio-credential-shapes.md` for fail-fast Account
   SID and auth-token shape validation.
+- See `docs/plans/2026-06-13-live-recipient-confirmation.md` for the explicit
+  live-recipient confirmation boundary.
+- See `docs/plans/2026-06-13-python-dependency-manifest.md` for the pinned
+  Python runtime and isolated package-audit gate.
 
 ## Contributing
 

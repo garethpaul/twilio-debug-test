@@ -21,6 +21,8 @@ for path in \
   "CHANGES.md" \
   "Makefile" \
   "README.md" \
+  "requirements.txt" \
+  "requirements-dev.txt" \
   "SECURITY.md" \
   "VISION.md" \
   "test.js" \
@@ -37,6 +39,8 @@ for path in \
   "docs/plans/2026-06-12-e164-phone-validation.md" \
   "docs/plans/2026-06-13-twilio-credential-shapes.md" \
   "docs/plans/2026-06-13-live-recipient-confirmation.md" \
+  "docs/plans/2026-06-13-python-dependency-manifest.md" \
+  "scripts/check-python-package.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -313,12 +317,46 @@ for node_exit_contract in \
   fi
 done
 
-for target in "lint:" "test:" "build:" "verify:" "check:"; do
+for target in "lint:" "test:" "build:" "package-check:" "verify:" "check:"; do
   if ! grep -Fq -- "$target" "$MAKEFILE"; then
     printf '%s\n' "Makefile must expose the $target gate." >&2
     exit 1
   fi
 done
+
+if [ "$(cat "$ROOT_DIR/requirements.txt")" != "twilio==9.10.9" ]; then
+  printf '%s\n' "requirements.txt must pin twilio==9.10.9." >&2
+  exit 1
+fi
+
+for dev_pin in "pip==26.1.2" "pip-audit==2.10.0"; do
+  if ! grep -Fxq -- "$dev_pin" "$ROOT_DIR/requirements-dev.txt"; then
+    printf '%s\n' "requirements-dev.txt is missing $dev_pin." >&2
+    exit 1
+  fi
+done
+
+for package_contract in \
+  'env -u PYTHONPATH' \
+  'importlib.metadata.version("twilio")' \
+  'import importlib.metadata, sys, twilio' \
+  '-m pip check' \
+  '-m pip_audit -r "$ROOT_DIR/requirements.txt"'; do
+  if ! grep -Fq -- "$package_contract" "$ROOT_DIR/scripts/check-python-package.sh"; then
+    printf '%s\n' "Python package gate is missing: $package_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Fc 'env -u PYTHONPATH' "$ROOT_DIR/scripts/check-python-package.sh")" -ne 4 ]; then
+  printf '%s\n' "Every Python package-gate command must remove PYTHONPATH." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"' "$MAKEFILE"; then
+  printf '%s\n' "Makefile must run the isolated Python package gate." >&2
+  exit 1
+fi
 
 for command in \
   "python3 -m unittest discover -s tests -p 'test_*.py'" \
