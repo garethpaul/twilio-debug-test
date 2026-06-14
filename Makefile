@@ -1,6 +1,6 @@
 .PHONY: build check lint package-check test verify
 
-ROOT := $(CURDIR)
+override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PYTHON ?= python3
 NODE ?= node
 
