@@ -1,6 +1,6 @@
 # Node Dependency Manifest
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -28,12 +28,15 @@ the canonical path-independent gate.
 
 ## Verification
 
-- focused Node contracts and package metadata checks
-- repository and external-directory `make check`
-- `npm ci --ignore-scripts` and production `npm audit`
-- hostile package version, lockfile, engine, privacy, install, audit,
-  documentation, suite, and plan-status mutations
-- final artifact, credential, exact-diff, and hosted matrix audits
+- Focused Node contracts and package metadata checks passed.
+- The repository and external-directory `make check` passed.
+- `npm ci --ignore-scripts` and the production `npm audit` passed with zero
+  known vulnerabilities.
+- Nine hostile Node package mutations were rejected across the package version,
+  lockfile, engine, privacy, install, audit, documentation, suite, and plan
+  status contracts.
+- Final artifact, credential, exact-diff, and hosted matrix audits remain the
+  shipping gate.
 
 ## Scope Boundary
 
