@@ -92,6 +92,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
   with Node.js 20, 22, and 24 for every push and pull request on Ubuntu 24.04,
   using pinned actions, read-only permissions, and credential-free checkout.
+- A separate job in that workflow runs pinned CodeQL analysis for GitHub
+  Actions, Python, and JavaScript/TypeScript. Only that job receives the
+  `security-events: write` permission needed to upload code-scanning results.
 - Each hosted matrix job reruns the full gate from a temporary working
   directory to enforce path-independent Makefile behavior.
 - `requirements.txt` pins the Python Twilio helper used by live sends;
@@ -117,6 +120,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `make check`.
 - See `docs/plans/2026-06-14-node-dependency-manifest.md` for the exact Node
   helper pin, lockfile, script-disabled install, and vulnerability audit gate.
+- See `docs/plans/2026-06-14-codeql-analysis.md` for the pinned,
+  least-privilege code-scanning contract.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

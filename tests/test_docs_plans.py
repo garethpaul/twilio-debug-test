@@ -22,6 +22,7 @@ PYTHON_DEPENDENCY_MANIFEST_PLAN = (
 NODE_DEPENDENCY_MANIFEST_PLAN = (
     DOCS_PLANS / "2026-06-14-node-dependency-manifest.md"
 )
+CODEQL_ANALYSIS_PLAN = DOCS_PLANS / "2026-06-14-codeql-analysis.md"
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -40,6 +41,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(LIVE_RECIPIENT_CONFIRMATION_PLAN, plans)
         self.assertIn(PYTHON_DEPENDENCY_MANIFEST_PLAN, plans)
         self.assertIn(NODE_DEPENDENCY_MANIFEST_PLAN, plans)
+        self.assertIn(CODEQL_ANALYSIS_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")

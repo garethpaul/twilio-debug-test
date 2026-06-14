@@ -44,6 +44,7 @@ for path in \
   "docs/plans/2026-06-13-python-dependency-manifest.md" \
   "docs/plans/2026-06-14-make-root-protection.md" \
   "docs/plans/2026-06-14-node-dependency-manifest.md" \
+  "docs/plans/2026-06-14-codeql-analysis.md" \
   "scripts/check-node-package.js" \
   "scripts/check-python-package.sh" \
   "scripts/check-baseline.sh"; do
@@ -250,6 +251,30 @@ jobs:
         run: make check
       - name: Verify external working directory
         run: cd "$(mktemp -d)" && make -C "$GITHUB_WORKSPACE" check
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, javascript-typescript, python]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - name: Analyze
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
 YAML
 )
 
@@ -275,6 +300,13 @@ for workflow_contract in \
   "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" \
   "persist-credentials: false" \
   "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0" \
+  'name: CodeQL (${{ matrix.language }})' \
+  "security-events: write" \
+  "language: [actions, javascript-typescript, python]" \
+  "github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4" \
+  'languages: ${{ matrix.language }}' \
+  "build-mode: none" \
+  "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4" \
   "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3" \
   "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0" \
   "run: make check" \
@@ -284,6 +316,16 @@ for workflow_contract in \
     exit 1
   fi
 done
+
+if [ "$(grep -Fc 'security-events: write' "$WORKFLOW")" -ne 1 ]; then
+  printf '%s\n' "GitHub Actions must grant code-scanning upload permission only once." >&2
+  exit 1
+fi
+
+if [ "$(grep -Fc 'github/codeql-action/' "$WORKFLOW")" -ne 2 ]; then
+  printf '%s\n' "GitHub Actions must contain exactly the pinned CodeQL init and analyze steps." >&2
+  exit 1
+fi
 
 workflow_count=$(find "$ROOT_DIR/.github/workflows" -type f \( -name '*.yml' -o -name '*.yaml' \) | wc -l | tr -d ' ')
 if [ "$workflow_count" -ne 1 ]; then
@@ -363,6 +405,30 @@ for node_package_evidence in \
   fi
 done
 
+for codeql_evidence in \
+  "$ROOT_DIR/README.md:Actions, Python, and JavaScript/TypeScript" \
+  "$ROOT_DIR/CHANGES.md:CodeQL" \
+  "$ROOT_DIR/SECURITY.md:CodeQL" \
+  "$ROOT_DIR/VISION.md:CodeQL"; do
+  evidence_file=${codeql_evidence%%:*}
+  evidence_contract=${codeql_evidence#*:}
+  if ! grep -Fq -- "$evidence_contract" "$evidence_file"; then
+    printf '%s\n' "$evidence_file is missing CodeQL evidence: $evidence_contract" >&2
+    exit 1
+  fi
+done
+
+CODEQL_PLAN="$DOCS_PLANS/2026-06-14-codeql-analysis.md"
+for plan_contract in \
+  'Status: Completed' \
+  'The repository and external-directory `make check` passed.' \
+  'hostile CodeQL workflow mutations were rejected'; do
+  if ! grep -Fq -- "$plan_contract" "$CODEQL_PLAN"; then
+    printf '%s\n' "CodeQL plan is missing verification evidence: $plan_contract" >&2
+    exit 1
+  fi
+done
+
 NODE_PACKAGE_PLAN="$DOCS_PLANS/2026-06-14-node-dependency-manifest.md"
 for plan_contract in \
   'Status: Completed' \
@@ -376,6 +442,7 @@ done
 
 for suite_contract in \
   'NODE_DEPENDENCY_MANIFEST_PLAN' \
+  'CODEQL_ANALYSIS_PLAN' \
   '$(NPM) ci --ignore-scripts --no-audit --fund=false' \
   '$(NPM) audit --omit=dev --audit-level=low'; do
   if ! grep -Fq -- "$suite_contract" "$ROOT_DIR/tests/test_docs_plans.py"; then
