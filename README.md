@@ -161,6 +161,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   live-recipient confirmation boundary.
 - See `docs/plans/2026-06-13-python-dependency-manifest.md` for the pinned
   Python runtime and isolated package-audit gate.
+- See `docs/plans/2026-06-14-make-root-protection.md` for Makefile-derived,
+  override-resistant repository verification paths.
 
 ## Contributing
 

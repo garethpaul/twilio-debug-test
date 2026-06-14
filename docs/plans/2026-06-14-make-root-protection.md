@@ -1,6 +1,6 @@
 # Make Root Protection
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -71,12 +71,31 @@ This change does not modify Python or JavaScript message behavior, credential
 validation, recipient confirmation, logging, CLI redaction, dependency pins,
 workflow policy, or deployment behavior.
 
-## Verification Plan
+## Work Completed
 
-- Run focused baseline and Make dry-run checks.
-- Exercise all aliases from repository and external directories under ordinary
-  and hostile root assignments while preserving Python and Node selection.
-- Reject eight focused structural and evidence mutations.
-- Run the full pinned `make check` gate with an explicit timeout.
-- Review the exact plan-scoped diff and audit generated artifacts, changed-line
-  secrets, whitespace, and protected application/test/workflow/dependency paths.
+- Replaced the caller-directory root with one protected, Makefile-derived
+  repository root while preserving configurable Python and Node selection.
+- Added exact declaration/count/order, alias, repository-path, README, and plan
+  contracts to the canonical shell baseline checker.
+- Indexed the completed evidence without changing message, credential,
+  confirmation, privacy, dependency, workflow, or runtime behavior.
+
+## Verification Results
+
+- All six public aliases passed from repository and external working
+  directories under ordinary, hostile environment, and hostile command-line
+  root conditions, for 36 bounded dry-run cases; explicit `PYTHON` and `NODE`
+  overrides remained effective.
+- Eight current-directory declaration, duplicate assignment, ordering, alias,
+  baseline-path, README, missing-plan, and incomplete-plan mutations were
+  rejected.
+- A disposable exact-source snapshot passed the pinned `make check` gate under
+  an explicit timeout: Python compilation, Node syntax, 28 Python tests, Node
+  contracts, isolated Twilio 9.10.9 installation, `pip check`, and `pip-audit`
+  with no known vulnerabilities.
+- The completed plan record passed the same full gate from the repository and
+  an external working directory without Twilio credentials or live API calls.
+- Plan-aware correctness, build-integrity, security, testing, maintainability,
+  reliability, and project-standards review found no actionable findings.
+- Exact diff, protected application/test/workflow/dependency path,
+  generated-artifact, changed-line secret, and whitespace audits passed.

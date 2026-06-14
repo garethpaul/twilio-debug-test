@@ -40,6 +40,7 @@ for path in \
   "docs/plans/2026-06-13-twilio-credential-shapes.md" \
   "docs/plans/2026-06-13-live-recipient-confirmation.md" \
   "docs/plans/2026-06-13-python-dependency-manifest.md" \
+  "docs/plans/2026-06-14-make-root-protection.md" \
   "scripts/check-python-package.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -296,15 +297,40 @@ if ! grep -Fq '"$(ROOT)/scripts/check-baseline.sh"' "$MAKEFILE"; then
   exit 1
 fi
 
+python3 - "$MAKEFILE" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+makefile = Path(sys.argv[1]).read_text(encoding="utf-8")
+root_declaration = "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))"
+assignments = re.findall(r"^(?:override\s+)?ROOT\s*[:+?]?=", makefile, re.MULTILINE)
+if len(assignments) != 1 or makefile.count(root_declaration) != 1:
+    raise SystemExit("Makefile must contain exactly one protected repository-root declaration.")
+if makefile.count(f"{root_declaration}\nPYTHON ?= python3\nNODE ?= node") != 1:
+    raise SystemExit("Makefile must keep the protected root before tool overrides.")
+PY
+
 for make_contract in \
-  'ROOT := $(CURDIR)' \
+  '.PHONY: build check lint package-check test verify' \
+  'test: lint' \
+  'build: lint' \
+  'verify: lint test build' \
+  'check: verify package-check' \
   'cd "$(ROOT)" && $(PYTHON)' \
-  'cd "$(ROOT)" && $(NODE)'; do
+  'cd "$(ROOT)" && $(NODE)' \
+  'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"' \
+  '"$(ROOT)/scripts/check-baseline.sh"'; do
   if ! grep -Fq -- "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile is missing root-independent contract: $make_contract" >&2
     exit 1
   fi
 done
+
+if ! grep -Fq 'docs/plans/2026-06-14-make-root-protection.md' "$README"; then
+  printf '%s\n' "README.md must index Make root protection evidence." >&2
+  exit 1
+fi
 
 for node_exit_contract in \
   "process.exitCode = exitCode;" \
