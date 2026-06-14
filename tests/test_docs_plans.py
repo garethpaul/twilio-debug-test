@@ -19,6 +19,9 @@ LIVE_RECIPIENT_CONFIRMATION_PLAN = (
 PYTHON_DEPENDENCY_MANIFEST_PLAN = (
     DOCS_PLANS / "2026-06-13-python-dependency-manifest.md"
 )
+NODE_DEPENDENCY_MANIFEST_PLAN = (
+    DOCS_PLANS / "2026-06-14-node-dependency-manifest.md"
+)
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -36,6 +39,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(E164_PHONE_VALIDATION_PLAN, plans)
         self.assertIn(LIVE_RECIPIENT_CONFIRMATION_PLAN, plans)
         self.assertIn(PYTHON_DEPENDENCY_MANIFEST_PLAN, plans)
+        self.assertIn(NODE_DEPENDENCY_MANIFEST_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
@@ -48,6 +52,14 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn('"$(ROOT)/scripts/check-baseline.sh"', makefile)
         self.assertIn(
             'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"',
+            makefile,
+        )
+        self.assertIn(
+            'cd "$(ROOT)" && $(NPM) ci --ignore-scripts --no-audit --fund=false',
+            makefile,
+        )
+        self.assertIn(
+            'cd "$(ROOT)" && $(NPM) audit --omit=dev --audit-level=low',
             makefile,
         )
 

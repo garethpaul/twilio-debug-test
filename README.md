@@ -96,6 +96,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   directory to enforce path-independent Makefile behavior.
 - `requirements.txt` pins the Python Twilio helper used by live sends;
   `requirements-dev.txt` pins pip and pip-audit for the canonical package gate.
+- `package.json` pins `twilio@6.0.2`, requires Node.js 20 or newer, and remains
+  private. `package-lock.json` makes its production dependency graph
+  reproducible. The canonical gate installs it with lifecycle scripts disabled
+  and runs a production `npm audit` before the baseline completes.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
@@ -111,6 +115,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   run, and confirm that dry-run mode remains credential-free.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
+- See `docs/plans/2026-06-14-node-dependency-manifest.md` for the exact Node
+  helper pin, lockfile, script-disabled install, and vulnerability audit gate.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

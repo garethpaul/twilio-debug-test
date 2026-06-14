@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-14
+
+- Added a private Node manifest and lockfile for exact `twilio@6.0.2`, plus
+  script-disabled installation, structured package contracts, and production
+  vulnerability auditing in `make check`.
+
 ## 2026-06-13
 
 - Added pinned Python Twilio, pip, and pip-audit manifests plus an isolated

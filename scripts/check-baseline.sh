@@ -20,6 +20,8 @@ for path in \
   ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
+  "package.json" \
+  "package-lock.json" \
   "README.md" \
   "requirements.txt" \
   "requirements-dev.txt" \
@@ -41,6 +43,8 @@ for path in \
   "docs/plans/2026-06-13-live-recipient-confirmation.md" \
   "docs/plans/2026-06-13-python-dependency-manifest.md" \
   "docs/plans/2026-06-14-make-root-protection.md" \
+  "docs/plans/2026-06-14-node-dependency-manifest.md" \
+  "scripts/check-node-package.js" \
   "scripts/check-python-package.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -307,18 +311,21 @@ root_declaration = "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)
 assignments = re.findall(r"^(?:override\s+)?ROOT\s*[:+?]?=", makefile, re.MULTILINE)
 if len(assignments) != 1 or makefile.count(root_declaration) != 1:
     raise SystemExit("Makefile must contain exactly one protected repository-root declaration.")
-if makefile.count(f"{root_declaration}\nPYTHON ?= python3\nNODE ?= node") != 1:
+if makefile.count(f"{root_declaration}\nPYTHON ?= python3\nNODE ?= node\nNPM ?= npm") != 1:
     raise SystemExit("Makefile must keep the protected root before tool overrides.")
 PY
 
 for make_contract in \
-  '.PHONY: build check lint package-check test verify' \
+  '.PHONY: build check lint node-package-check package-check test verify' \
   'test: lint' \
   'build: lint' \
   'verify: lint test build' \
   'check: verify package-check' \
   'cd "$(ROOT)" && $(PYTHON)' \
   'cd "$(ROOT)" && $(NODE)' \
+  'cd "$(ROOT)" && $(NPM) ci --ignore-scripts --no-audit --fund=false' \
+  'cd "$(ROOT)" && $(NPM) audit --omit=dev --audit-level=low' \
+  'cd "$(ROOT)" && $(NODE) scripts/check-node-package.js' \
   'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"' \
   '"$(ROOT)/scripts/check-baseline.sh"'; do
   if ! grep -Fq -- "$make_contract" "$MAKEFILE"; then
@@ -332,6 +339,51 @@ if ! grep -Fq 'docs/plans/2026-06-14-make-root-protection.md' "$README"; then
   exit 1
 fi
 
+for node_package_doc_contract in \
+  'twilio@6.0.2' \
+  'package-lock.json' \
+  'lifecycle scripts disabled' \
+  'production `npm audit`' \
+  'docs/plans/2026-06-14-node-dependency-manifest.md'; do
+  if ! grep -Fq -- "$node_package_doc_contract" "$README"; then
+    printf '%s\n' "README.md is missing Node package evidence: $node_package_doc_contract" >&2
+    exit 1
+  fi
+done
+
+for node_package_evidence in \
+  "$ROOT_DIR/CHANGES.md:twilio@6.0.2" \
+  "$ROOT_DIR/SECURITY.md:twilio@6.0.2" \
+  "$ROOT_DIR/VISION.md:Node Twilio runtime"; do
+  evidence_file=${node_package_evidence%%:*}
+  evidence_contract=${node_package_evidence#*:}
+  if ! grep -Fq -- "$evidence_contract" "$evidence_file"; then
+    printf '%s\n' "$evidence_file is missing Node package evidence: $evidence_contract" >&2
+    exit 1
+  fi
+done
+
+NODE_PACKAGE_PLAN="$DOCS_PLANS/2026-06-14-node-dependency-manifest.md"
+for plan_contract in \
+  'Status: Completed' \
+  'The repository and external-directory `make check` passed.' \
+  'Nine hostile Node package mutations were rejected'; do
+  if ! grep -Fq -- "$plan_contract" "$NODE_PACKAGE_PLAN"; then
+    printf '%s\n' "Node package plan is missing verification evidence: $plan_contract" >&2
+    exit 1
+  fi
+done
+
+for suite_contract in \
+  'NODE_DEPENDENCY_MANIFEST_PLAN' \
+  '$(NPM) ci --ignore-scripts --no-audit --fund=false' \
+  '$(NPM) audit --omit=dev --audit-level=low'; do
+  if ! grep -Fq -- "$suite_contract" "$ROOT_DIR/tests/test_docs_plans.py"; then
+    printf '%s\n' "Docs-plan suite is missing Node package contract: $suite_contract" >&2
+    exit 1
+  fi
+done
+
 for node_exit_contract in \
   "process.exitCode = exitCode;" \
   "process.on('beforeExit'" \
@@ -343,7 +395,7 @@ for node_exit_contract in \
   fi
 done
 
-for target in "lint:" "test:" "build:" "package-check:" "verify:" "check:"; do
+for target in "lint:" "test:" "build:" "node-package-check:" "package-check:" "verify:" "check:"; do
   if ! grep -Fq -- "$target" "$MAKEFILE"; then
     printf '%s\n' "Makefile must expose the $target gate." >&2
     exit 1
@@ -381,6 +433,11 @@ fi
 
 if ! grep -Fq 'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"' "$MAKEFILE"; then
   printf '%s\n' "Makefile must run the isolated Python package gate." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'NPM ?= npm' "$MAKEFILE"; then
+  printf '%s\n' "Makefile must keep npm configurable." >&2
   exit 1
 fi
 

@@ -42,10 +42,11 @@ Priority:
 - Keep hosted checks unfiltered across branches and independent of caller paths
 - Keep the Python Twilio runtime and package-audit inputs pinned and exercised
   by the canonical gate
+- Keep the Node Twilio runtime exactly pinned, locked, script-disabled during
+  install, and audited by the canonical gate
 
 Next priorities:
 
-- Add a Node.js dependency manifest
 - Add setup notes for each language sample
 - Add deeper redaction examples for shared debug logs
 
