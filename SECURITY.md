@@ -34,6 +34,8 @@ Helpful reports include:
   credential-free checkout, a fixed Ubuntu 24.04 runner, and a bounded runtime
   while exercising the Python and Node.js sample checks on every push and pull
   request.
+- CodeQL analyzes GitHub Actions, Python, and JavaScript/TypeScript with an
+  immutable action pin. Its upload permission is scoped to the analysis job.
 - Command-line output must redact Twilio resource identifiers and must not emit
   unexpected provider error details that may contain credentials, phone
   numbers, request URLs, or message metadata.

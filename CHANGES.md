@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Added pinned, least-privilege CodeQL analysis for GitHub Actions, Python, and
+  JavaScript/TypeScript to every hosted push and pull request.
 - Added a private Node manifest and lockfile for exact `twilio@6.0.2`, plus
   script-disabled installation, structured package contracts, and production
   vulnerability auditing in `make check`.

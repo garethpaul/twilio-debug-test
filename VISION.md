@@ -40,6 +40,8 @@ Priority:
 - Allowlist sample-owned Node.js validation exceptions instead of message prefixes
 - Keep the Python and Node.js compatibility matrix enforced in hosted CI
 - Keep hosted checks unfiltered across branches and independent of caller paths
+- Keep pinned CodeQL coverage for GitHub Actions, Python, and
+  JavaScript/TypeScript with job-scoped upload permission
 - Keep the Python Twilio runtime and package-audit inputs pinned and exercised
   by the canonical gate
 - Keep the Node Twilio runtime exactly pinned, locked, script-disabled during
