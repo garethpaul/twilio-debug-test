@@ -47,6 +47,8 @@ Helpful reports include:
   shape check before dry-run output or live Twilio client construction.
 - Live mode must require a separate E.164 `TWILIO_CONFIRM_TO` value that matches
   the normalized `TWILIO_TO` recipient before credential or client setup.
+- Python and Node live provider requests use an explicit 30-second timeout;
+  automatic retries remain disabled because message creation is not idempotent.
 - Live mode requires the canonical Account SID and auth-token ASCII hexadecimal
   shapes before client construction. This rejects malformed local
   configuration but does not establish credential validity or authorization.

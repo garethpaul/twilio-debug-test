@@ -3,6 +3,8 @@ import io
 import logging
 from pathlib import Path
 from contextlib import redirect_stderr, redirect_stdout
+import sys
+import types
 import unittest
 from unittest import mock
 
@@ -307,6 +309,60 @@ class CompanyCommsTest(unittest.TestCase):
         self.assertEqual(
             FakeTwilioClient.instances[0].http_client.logger.level,
             logging.INFO,
+        )
+
+    def test_default_python_client_uses_bounded_provider_timeout(self):
+        sample = load_sample()
+        created = {}
+
+        class DefaultHttpClient(FakeHttpClient):
+            def __init__(self, timeout=None):
+                super().__init__()
+                created["timeout"] = timeout
+
+        def default_client(account_sid, auth_token, http_client=None):
+            created["account_sid"] = account_sid
+            created["auth_token"] = auth_token
+            created["http_client"] = http_client
+            client = FakeTwilioClient(account_sid, auth_token)
+            client.http_client = http_client
+            return client
+
+        twilio_module = types.ModuleType("twilio")
+        http_module = types.ModuleType("twilio.http")
+        http_client_module = types.ModuleType("twilio.http.http_client")
+        rest_module = types.ModuleType("twilio.rest")
+        http_client_module.TwilioHttpClient = DefaultHttpClient
+        rest_module.Client = default_client
+
+        env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+        with mock.patch.dict(sys.modules, {
+            "twilio": twilio_module,
+            "twilio.http": http_module,
+            "twilio.http.http_client": http_client_module,
+            "twilio.rest": rest_module,
+        }):
+            message = sample.CompanyComms(env=env).send_msg()
+
+        self.assertEqual(message.sid, "SM123")
+        self.assertEqual(created["account_sid"], VALID_ACCOUNT_SID)
+        self.assertEqual(created["auth_token"], VALID_AUTH_TOKEN)
+        self.assertEqual(
+            created["timeout"],
+            sample.PROVIDER_REQUEST_TIMEOUT_SECONDS,
+        )
+        self.assertEqual(created["timeout"], 30)
+        self.assertIs(
+            created["http_client"],
+            FakeTwilioClient.instances[0].http_client,
         )
 
     def test_live_send_requires_matching_recipient_confirmation_before_client_setup(self):

@@ -1,6 +1,6 @@
 # Provider Request Timeout
 
-## Status: Planned
+## Status: Completed
 
 ## Priority
 
@@ -57,7 +57,20 @@ sample does not state or test that bound.
 
 ## Verification
 
-Pending implementation and validation.
+- Focused Python and Node live-send tests passed with the default Python HTTP
+  client receiving 30 seconds and the Node client factory receiving 30,000
+  milliseconds; injected fake clients and dry-run behavior remained intact.
+- Four hostile timeout mutations were rejected: changing each language's
+  timeout constant and bypassing each client-construction timeout.
+- Repository and external-directory `make check` passed with Python and Node
+  syntax checks, 29 Python tests, Node contract and subprocess tests, exact npm
+  installation, npm audit, isolated Twilio Python dependency verification,
+  `pip check`, `pip-audit`, and workflow contracts.
+- Validation-created dependency and bytecode directories were removed by exact
+  path; final artifact, credential-path, changed-line secret, exact-diff, and
+  whitespace audits passed.
+- Hosted checks, CodeQL, and alert capability queries remain the authority for
+  the exact pushed head.
 
 ## Scope Boundary
 

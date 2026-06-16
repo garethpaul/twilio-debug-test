@@ -92,6 +92,7 @@ assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' WARNING ' }), 'wa
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: 'noisy' }), 'info');
 assert.strictEqual(typeof sample.runCli, 'function');
 assert.strictEqual(sample.MAX_MESSAGE_BODY_LENGTH, 1600);
+assert.strictEqual(sample.PROVIDER_REQUEST_TIMEOUT_MS, 30000);
 assert.ok(
   fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
     .includes('client.logLevel = twilioLogLevel(env);')
@@ -268,6 +269,7 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   let createdClient;
   let seenAccountSid;
   let seenAuthToken;
+  let seenClientOptions;
   let seenPayload;
   const liveEnv = {
     TWILIO_SEND_LIVE: 'true',
@@ -283,9 +285,10 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   console.log = function(message) {
     liveLogs.push(String(message));
   };
-  return sample.sendMessage(liveEnv, function(accountSid, authToken) {
+  return sample.sendMessage(liveEnv, function(accountSid, authToken, clientOptions) {
     seenAccountSid = accountSid;
     seenAuthToken = authToken;
+    seenClientOptions = clientOptions;
     createdClient = {
       logLevel: null,
       messages: {
@@ -299,6 +302,7 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   }).then((message) => {
     assert.strictEqual(seenAccountSid, VALID_ACCOUNT_SID);
     assert.strictEqual(seenAuthToken, VALID_AUTH_TOKEN);
+    assert.deepStrictEqual(seenClientOptions, { timeout: 30000 });
     assert.strictEqual(createdClient.logLevel, 'info');
     assert.deepStrictEqual(seenPayload, {
       from: '+12025550124',

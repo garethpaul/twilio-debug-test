@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-16
+
+- Added an explicit 30-second provider request timeout to Python and Node live
+  Twilio clients while keeping automatic retries disabled.
+
 ## 2026-06-14
 
 - Added pinned, least-privilege CodeQL analysis for GitHub Actions, Python, and

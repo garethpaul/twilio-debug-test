@@ -23,6 +23,9 @@ NODE_DEPENDENCY_MANIFEST_PLAN = (
     DOCS_PLANS / "2026-06-14-node-dependency-manifest.md"
 )
 CODEQL_ANALYSIS_PLAN = DOCS_PLANS / "2026-06-14-codeql-analysis.md"
+PROVIDER_REQUEST_TIMEOUT_PLAN = (
+    DOCS_PLANS / "2026-06-16-provider-request-timeout.md"
+)
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -42,11 +45,19 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(PYTHON_DEPENDENCY_MANIFEST_PLAN, plans)
         self.assertIn(NODE_DEPENDENCY_MANIFEST_PLAN, plans)
         self.assertIn(CODEQL_ANALYSIS_PLAN, plans)
+        self.assertIn(PROVIDER_REQUEST_TIMEOUT_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
             self.assertIn("Status: Completed", text)
             self.assertIn("make check", text)
+
+        timeout_plan = PROVIDER_REQUEST_TIMEOUT_PLAN.read_text(encoding="utf-8")
+        self.assertIn(
+            "Repository and external-directory `make check` passed",
+            timeout_plan,
+        )
+        self.assertIn("Four hostile timeout mutations were rejected", timeout_plan)
 
     def test_check_gate_runs_scripted_baseline(self):
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")

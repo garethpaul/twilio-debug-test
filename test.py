@@ -13,6 +13,7 @@ TWILIO_LOG_LEVELS = {
     "silent": logging.CRITICAL + 10,
 }
 MAX_MESSAGE_BODY_LENGTH = 1600
+PROVIDER_REQUEST_TIMEOUT_SECONDS = 30
 E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")
 ACCOUNT_SID_PATTERN = re.compile(r"^AC[0-9A-Fa-f]{32}$")
 AUTH_TOKEN_PATTERN = re.compile(r"^[0-9A-Fa-f]{32}$")
@@ -67,13 +68,20 @@ class CompanyComms:
 
         client_factory = self.client_factory
         if client_factory is None:
+            from twilio.http.http_client import TwilioHttpClient
             from twilio.rest import Client
-            client_factory = Client
-
-        client = client_factory(
-            account_sid,
-            auth_token,
-        )
+            client = Client(
+                account_sid,
+                auth_token,
+                http_client=TwilioHttpClient(
+                    timeout=PROVIDER_REQUEST_TIMEOUT_SECONDS,
+                ),
+            )
+        else:
+            client = client_factory(
+                account_sid,
+                auth_token,
+            )
         client.http_client.logger.setLevel(twilio_log_level(self.env))
 
         return client.messages.create(

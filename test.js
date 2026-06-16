@@ -1,4 +1,5 @@
 const MAX_MESSAGE_BODY_LENGTH = 1600;
+const PROVIDER_REQUEST_TIMEOUT_MS = 30000;
 const E164_PHONE_PATTERN = /^\+[1-9][0-9]{1,14}$/;
 const ACCOUNT_SID_PATTERN = /^AC[0-9A-Fa-f]{32}$/;
 const AUTH_TOKEN_PATTERN = /^[0-9A-Fa-f]{32}$/;
@@ -143,7 +144,9 @@ async function sendMessage(env, clientFactory) {
   const authToken = settingValue(env.TWILIO_AUTH_TOKEN);
   validateCredentials(accountSid, authToken);
   const createClient = clientFactory || require('twilio');
-  const client = createClient(accountSid, authToken);
+  const client = createClient(accountSid, authToken, {
+    timeout: PROVIDER_REQUEST_TIMEOUT_MS
+  });
   client.logLevel = twilioLogLevel(env);
 
   const message = await client.messages.create(payload);
@@ -176,6 +179,7 @@ module.exports = {
   createMessagePayload,
   MAX_MESSAGE_BODY_LENGTH,
   MessageValidationError,
+  PROVIDER_REQUEST_TIMEOUT_MS,
   redactPhone,
   runCli,
   sendMessage,

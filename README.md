@@ -50,6 +50,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   Live mode also requires `TWILIO_CONFIRM_TO` to be a valid E.164 value that
   exactly matches the normalized `TWILIO_TO` recipient. This separate
   confirmation is checked before credentials or a Twilio client are used.
+  Python and Node live provider requests use an explicit 30-second timeout;
+  automatic retries remain disabled to avoid duplicate message creation.
   Live mode requires an Account SID with `AC` plus 32 ASCII hexadecimal
   characters and an auth token with exactly 32 ASCII hexadecimal characters;
   both shapes are checked before Twilio client construction. This local shape
@@ -122,6 +124,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   helper pin, lockfile, script-disabled install, and vulnerability audit gate.
 - See `docs/plans/2026-06-14-codeql-analysis.md` for the pinned,
   least-privilege code-scanning contract.
+- See `docs/plans/2026-06-16-provider-request-timeout.md` for the explicit
+  Python and Node provider request-timeout boundary.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

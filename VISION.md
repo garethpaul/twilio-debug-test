@@ -24,6 +24,8 @@ Priority:
 - Validate sender and recipient settings consistently as E.164 values
 - Require a separate matching recipient confirmation before any live-send
   credential or client setup
+- Bound Python and Node provider requests without enabling duplicate-prone
+  automatic retries
 - Bound sample message bodies before dry-run output or live send setup
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
