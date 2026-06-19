@@ -85,6 +85,47 @@ function validateLiveRecipient(env, toNumber) {
   }
 }
 
+async function defaultPromptRecipient(prompt) {
+  const readline = require('readline/promises');
+  const promptInterface = readline.createInterface({
+    input: process.stdin,
+    output: process.stderr
+  });
+  try {
+    return await promptInterface.question(prompt);
+  } finally {
+    promptInterface.close();
+  }
+}
+
+async function confirmLiveExecution(env, toNumber, confirmationOptions) {
+  confirmationOptions = confirmationOptions || {};
+  const isInteractive = confirmationOptions.isInteractive === undefined
+    ? Boolean(process.stdin.isTTY && process.stderr.isTTY)
+    : confirmationOptions.isInteractive;
+  if (!isInteractive) {
+    if (settingValue(env.TWILIO_ALLOW_NONINTERACTIVE).toLowerCase() === 'true') {
+      return;
+    }
+    throw new MessageValidationError(
+      'Live sends require a TTY confirmation or TWILIO_ALLOW_NONINTERACTIVE=true.'
+    );
+  }
+
+  const promptRecipient = confirmationOptions.promptRecipient || defaultPromptRecipient;
+  const prompt = "Type 'send " + toNumber.slice(-4) + "' to send live to " +
+    redactPhone(toNumber) + ': ';
+  let confirmation;
+  try {
+    confirmation = settingValue(await promptRecipient(prompt)).toLowerCase();
+  } catch (error) {
+    throw new MessageValidationError('Interactive confirmation did not match TWILIO_TO.');
+  }
+  if (confirmation !== 'send ' + toNumber.slice(-4)) {
+    throw new MessageValidationError('Interactive confirmation did not match TWILIO_TO.');
+  }
+}
+
 function createMessagePayload(env) {
   env = env || process.env;
   const missingMessageSettings = missingSettings(env, [
@@ -113,7 +154,7 @@ function createMessagePayload(env) {
   return payload;
 }
 
-async function sendMessage(env, clientFactory) {
+async function sendMessage(env, clientFactory, confirmationOptions) {
   env = env || process.env;
   const payload = createMessagePayload(env);
 
@@ -129,6 +170,7 @@ async function sendMessage(env, clientFactory) {
   }
 
   validateLiveRecipient(env, payload.to);
+  await confirmLiveExecution(env, payload.to, confirmationOptions);
 
   const missingCredentials = missingSettings(env, [
     'TWILIO_ACCOUNT_SID',
@@ -145,6 +187,7 @@ async function sendMessage(env, clientFactory) {
   validateCredentials(accountSid, authToken);
   const createClient = clientFactory || require('twilio');
   const client = createClient(accountSid, authToken, {
+    autoRetry: false,
     timeout: PROVIDER_REQUEST_TIMEOUT_MS
   });
   client.logLevel = twilioLogLevel(env);
@@ -175,6 +218,7 @@ if (require.main === module) {
 
 module.exports = {
   cliErrorMessage,
+  confirmLiveExecution,
   CredentialValidationError,
   createMessagePayload,
   MAX_MESSAGE_BODY_LENGTH,

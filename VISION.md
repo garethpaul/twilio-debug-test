@@ -36,6 +36,9 @@ Priority:
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients
+- Require a redacted, per-invocation TTY confirmation or a narrowly scoped
+  explicit noninteractive authorization before every live send
+- Keep provider message creation retries explicitly disabled in both runtimes
 - Keep live-send Message SIDs redacted in command-line output
 - Keep unexpected provider diagnostics out of user-facing stderr
 - Allowlist sample-owned Python validation exceptions instead of broad built-in types

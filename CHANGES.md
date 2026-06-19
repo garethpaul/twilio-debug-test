@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-19
+
+- Added a fail-closed per-invocation live-send gate: interactive runs require a
+  redacted `send ####` confirmation phrase, while noninteractive runs require
+  the explicit `TWILIO_ALLOW_NONINTERACTIVE=true` authorization.
+- Made duplicate-send prevention explicit with Python `max_retries=0` and Node
+  `autoRetry:false`, with fake-provider regression coverage.
+
 ## 2026-06-16
 
 - Added an explicit 30-second provider request timeout to Python and Node live

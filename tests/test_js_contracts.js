@@ -187,6 +187,7 @@ const confirmationChecks = invalidConfirmations.reduce((promise, confirmationCas
 }, Promise.resolve()).then(() => {
   assert.strictEqual(confirmationFactoryCalls, 0);
   const confirmedEnv = Object.assign({}, liveConfirmationBase, {
+    TWILIO_ALLOW_NONINTERACTIVE: 'true',
     TWILIO_CONFIRM_TO: '  +12025550123  '
   });
   return sample.sendMessage(confirmedEnv, function() {
@@ -226,6 +227,7 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
 
     const validCredentials = {
       TWILIO_SEND_LIVE: 'true',
+      TWILIO_ALLOW_NONINTERACTIVE: 'true',
       TWILIO_CONFIRM_TO: '+12025550123',
       TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
       TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
@@ -273,6 +275,7 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   let seenPayload;
   const liveEnv = {
     TWILIO_SEND_LIVE: 'true',
+    TWILIO_ALLOW_NONINTERACTIVE: 'true',
     TWILIO_CONFIRM_TO: '+12025550123',
     TWILIO_ACCOUNT_SID: VALID_ACCOUNT_SID,
     TWILIO_AUTH_TOKEN: VALID_AUTH_TOKEN,
@@ -280,12 +283,49 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
     TWILIO_FROM: '+12025550124',
     TWILIO_BODY: 'live body'
   };
+  const unsafeNoninteractiveEnv = Object.assign({}, liveEnv);
+  delete unsafeNoninteractiveEnv.TWILIO_ALLOW_NONINTERACTIVE;
+  let unsafeNoninteractiveFactoryCalls = 0;
+  return sample.sendMessage(unsafeNoninteractiveEnv, function() {
+    unsafeNoninteractiveFactoryCalls += 1;
+  }, {
+    isInteractive: false
+  }).then(() => {
+    assert.fail('noninteractive live sends must require an explicit override');
+  }, (error) => {
+    assert(error instanceof sample.MessageValidationError);
+    assert.strictEqual(
+      error.message,
+      'Live sends require a TTY confirmation or TWILIO_ALLOW_NONINTERACTIVE=true.'
+    );
+    assert.strictEqual(unsafeNoninteractiveFactoryCalls, 0);
+  }).then(() => {
+    let interactiveFactoryCalls = 0;
+    return sample.sendMessage(liveEnv, function() {
+      interactiveFactoryCalls += 1;
+    }, {
+      isInteractive: true,
+      promptRecipient: async function(prompt) {
+        assert(prompt.includes('********0123'));
+        assert.strictEqual(prompt.includes('+12025550123'), false);
+        return 'send 9999';
+      }
+    }).then(() => {
+      assert.fail('mismatched interactive confirmation must reject');
+    }, (error) => {
+      assert(error instanceof sample.MessageValidationError);
+      assert.strictEqual(error.message, 'Interactive confirmation did not match TWILIO_TO.');
+      assert.strictEqual(interactiveFactoryCalls, 0);
+    });
+  }).then(() => {
   const liveLogs = [];
   const originalConsoleLog = console.log;
   console.log = function(message) {
     liveLogs.push(String(message));
   };
-  return sample.sendMessage(liveEnv, function(accountSid, authToken, clientOptions) {
+  return sample.sendMessage(Object.assign({}, liveEnv, {
+    TWILIO_ALLOW_NONINTERACTIVE: 'true'
+  }), function(accountSid, authToken, clientOptions) {
     seenAccountSid = accountSid;
     seenAuthToken = authToken;
     seenClientOptions = clientOptions;
@@ -302,7 +342,10 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   }).then((message) => {
     assert.strictEqual(seenAccountSid, VALID_ACCOUNT_SID);
     assert.strictEqual(seenAuthToken, VALID_AUTH_TOKEN);
-    assert.deepStrictEqual(seenClientOptions, { timeout: 30000 });
+    assert.deepStrictEqual(seenClientOptions, {
+      autoRetry: false,
+      timeout: 30000
+    });
     assert.strictEqual(createdClient.logLevel, 'info');
     assert.deepStrictEqual(seenPayload, {
       from: '+12025550124',
@@ -365,6 +408,7 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
             const credentialErrors = [];
             return sample.runCli({
               TWILIO_SEND_LIVE: 'true',
+              TWILIO_ALLOW_NONINTERACTIVE: 'true',
               TWILIO_CONFIRM_TO: '+12025550123',
               TWILIO_FROM: '+12025550124',
               TWILIO_TO: '+12025550123',
@@ -403,6 +447,7 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   }).catch((error) => {
     console.log = originalConsoleLog;
     throw error;
+  });
   });
   });
 }).catch((error) => {

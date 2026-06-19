@@ -50,8 +50,13 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   Live mode also requires `TWILIO_CONFIRM_TO` to be a valid E.164 value that
   exactly matches the normalized `TWILIO_TO` recipient. This separate
   confirmation is checked before credentials or a Twilio client are used.
+  Each interactive invocation then requires typing `send ####`, where `####`
+  is the recipient's final four digits and the prompt displays only the
+  redacted recipient. Noninteractive jobs fail closed unless
+  `TWILIO_ALLOW_NONINTERACTIVE=true` is explicitly set for that invocation.
   Python and Node live provider requests use an explicit 30-second timeout;
-  automatic retries remain disabled to avoid duplicate message creation.
+  automatic retries are explicitly disabled to avoid duplicate message
+  creation.
   Live mode requires an Account SID with `AC` plus 32 ASCII hexadecimal
   characters and an auth token with exactly 32 ASCII hexadecimal characters;
   both shapes are checked before Twilio client construction. This local shape
@@ -109,6 +114,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
   `TWILIO_LOG_LEVEL` explicitly opts into a supported level.
+- Python and Node.js fake-provider tests require live sends to stop before
+  credential or client setup when stdin is noninteractive, unreadable, or the
+  redacted one-shot confirmation phrase does not match. Separate tests cover
+  the explicit noninteractive automation opt-in.
 - Node.js tests cover the live-send payload and log-level assignment with a
   fake Twilio client factory. They also cover concise CLI validation errors
   through the exported runner, including combined missing message-setting and

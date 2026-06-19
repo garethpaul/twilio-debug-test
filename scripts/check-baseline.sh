@@ -69,6 +69,37 @@ for credential_contract in \
   fi
 done
 
+for execution_confirmation_contract in \
+  'confirm_live_execution(' \
+  'TWILIO_ALLOW_NONINTERACTIVE' \
+  "Type 'send {}' to send live to {}" \
+  'await confirmLiveExecution(env, payload.to, confirmationOptions);' \
+  "Type 'send " \
+  'test_live_send_requires_per_invocation_confirmation_or_noninteractive_opt_in' \
+  'noninteractive live sends must require an explicit override'; do
+  if ! grep -Fq -- "$execution_confirmation_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$execution_confirmation_contract" "$ROOT_DIR/test.js" && \
+     ! grep -Fq -- "$execution_confirmation_contract" "$ROOT_DIR/tests/test_company_comms.py" && \
+     ! grep -Fq -- "$execution_confirmation_contract" "$ROOT_DIR/tests/test_js_contracts.js"; then
+    printf '%s\n' "Live execution confirmation contract is missing: $execution_confirmation_contract" >&2
+    exit 1
+  fi
+done
+
+for retry_contract in \
+  'max_retries=0' \
+  'autoRetry: false' \
+  'self.assertEqual(created["max_retries"], 0)' \
+  'autoRetry: false,'; do
+  if ! grep -Fq -- "$retry_contract" "$ROOT_DIR/test.py" && \
+     ! grep -Fq -- "$retry_contract" "$ROOT_DIR/test.js" && \
+     ! grep -Fq -- "$retry_contract" "$ROOT_DIR/tests/test_company_comms.py" && \
+     ! grep -Fq -- "$retry_contract" "$ROOT_DIR/tests/test_js_contracts.js"; then
+    printf '%s\n' "Explicit retry-disable contract is missing: $retry_contract" >&2
+    exit 1
+  fi
+done
+
 python3 - "$ROOT_DIR" <<'PY'
 from pathlib import Path
 import sys
@@ -115,6 +146,7 @@ ordering_contracts = (
         "test.py",
         "if not should_send_live(self.env):",
         'validate_live_recipient(self.env, payload["to"])',
+        "confirm_live_execution(",
         "missing = [",
         "client_factory = self.client_factory",
     ),
@@ -122,20 +154,27 @@ ordering_contracts = (
         "test.js",
         "if (!shouldSendLive(env)) {",
         "validateLiveRecipient(env, payload.to);",
+        "await confirmLiveExecution(env, payload.to, confirmationOptions);",
         "const missingCredentials = missingSettings",
         "const createClient = clientFactory",
     ),
 )
-for relative_path, dry_run, confirmation, credentials, client_setup in ordering_contracts:
+for relative_path, dry_run, recipient_confirmation, execution_confirmation, credentials, client_setup in ordering_contracts:
     source = (root / relative_path).read_text(encoding="utf-8")
     positions = tuple(
         source.index(marker)
-        for marker in (dry_run, confirmation, credentials, client_setup)
+        for marker in (
+            dry_run,
+            recipient_confirmation,
+            execution_confirmation,
+            credentials,
+            client_setup,
+        )
     )
     if positions != tuple(sorted(positions)):
         raise SystemExit(
-            "{} must confirm the live recipient after the dry-run branch and "
-            "before credential or client setup.".format(relative_path)
+            "{} must confirm the live recipient and this invocation after the "
+            "dry-run branch and before credential or client setup.".format(relative_path)
         )
 PY
 

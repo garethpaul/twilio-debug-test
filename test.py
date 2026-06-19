@@ -32,9 +32,17 @@ SAFE_CLI_ERROR_TYPES = (MessageValidationError, CredentialValidationError)
 
 class CompanyComms:
 
-    def __init__(self, env=None, client_factory=None):
+    def __init__(
+        self,
+        env=None,
+        client_factory=None,
+        input_stream=None,
+        prompt_reader=None,
+    ):
         self.env = env if env is not None else os.environ
         self.client_factory = client_factory
+        self.input_stream = input_stream if input_stream is not None else sys.stdin
+        self.prompt_reader = prompt_reader if prompt_reader is not None else input
 
     def sendMsg(self, to_number=None, from_number=None, body=None):
         """Run basic send message"""
@@ -52,6 +60,12 @@ class CompanyComms:
             }
 
         validate_live_recipient(self.env, payload["to"])
+        confirm_live_execution(
+            self.env,
+            payload["to"],
+            self.input_stream,
+            self.prompt_reader,
+        )
 
         missing = [
             name for name in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN")
@@ -75,6 +89,7 @@ class CompanyComms:
                 auth_token,
                 http_client=TwilioHttpClient(
                     timeout=PROVIDER_REQUEST_TIMEOUT_SECONDS,
+                    max_retries=0,
                 ),
             )
         else:
@@ -159,6 +174,40 @@ def validate_live_recipient(env, to_number):
     validate_phone(confirmation, "TWILIO_CONFIRM_TO")
     if confirmation != to_number:
         raise MessageValidationError("TWILIO_CONFIRM_TO must match TWILIO_TO.")
+
+
+def confirm_live_execution(env, to_number, input_stream, prompt_reader):
+    try:
+        is_interactive = bool(
+            input_stream
+            and getattr(input_stream, "isatty", lambda: False)()
+        )
+    except OSError:
+        is_interactive = False
+    if not is_interactive:
+        if setting_value(env.get("TWILIO_ALLOW_NONINTERACTIVE", "")).lower() == "true":
+            return
+        raise MessageValidationError(
+            "Live sends require a TTY confirmation or "
+            "TWILIO_ALLOW_NONINTERACTIVE=true."
+        )
+
+    prompt = (
+        "Type 'send {}' to send live to {}: ".format(
+            to_number[-4:],
+            redact_phone(to_number),
+        )
+    )
+    try:
+        confirmation = setting_value(prompt_reader(prompt)).lower()
+    except EOFError as error:
+        raise MessageValidationError(
+            "Interactive confirmation did not match TWILIO_TO."
+        ) from error
+    if confirmation != "send {}".format(to_number[-4:]):
+        raise MessageValidationError(
+            "Interactive confirmation did not match TWILIO_TO."
+        )
 
 
 def redact_phone(value):

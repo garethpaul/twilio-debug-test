@@ -216,6 +216,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ALLOW_NONINTERACTIVE": "true",
             "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_TO": "+12025550123",
             "TWILIO_FROM": "+12025550124",
@@ -229,6 +230,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         valid_env = {
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ALLOW_NONINTERACTIVE": "true",
             "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
             "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
@@ -295,6 +297,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ALLOW_NONINTERACTIVE": "true",
             "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
             "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
@@ -316,9 +319,10 @@ class CompanyCommsTest(unittest.TestCase):
         created = {}
 
         class DefaultHttpClient(FakeHttpClient):
-            def __init__(self, timeout=None):
+            def __init__(self, timeout=None, max_retries=None):
                 super().__init__()
                 created["timeout"] = timeout
+                created["max_retries"] = max_retries
 
         def default_client(account_sid, auth_token, http_client=None):
             created["account_sid"] = account_sid
@@ -337,6 +341,7 @@ class CompanyCommsTest(unittest.TestCase):
 
         env = {
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ALLOW_NONINTERACTIVE": "true",
             "TWILIO_CONFIRM_TO": "+12025550123",
             "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
             "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
@@ -360,6 +365,7 @@ class CompanyCommsTest(unittest.TestCase):
             sample.PROVIDER_REQUEST_TIMEOUT_SECONDS,
         )
         self.assertEqual(created["timeout"], 30)
+        self.assertEqual(created["max_retries"], 0)
         self.assertIs(
             created["http_client"],
             FakeTwilioClient.instances[0].http_client,
@@ -402,6 +408,7 @@ class CompanyCommsTest(unittest.TestCase):
         sample = load_sample()
         comms = sample.CompanyComms(env={
             "TWILIO_SEND_LIVE": "true",
+            "TWILIO_ALLOW_NONINTERACTIVE": "true",
             "TWILIO_CONFIRM_TO": "  +12025550123  ",
             "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
             "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
@@ -414,6 +421,100 @@ class CompanyCommsTest(unittest.TestCase):
 
         self.assertEqual(message.sid, "SM123")
         self.assertEqual(len(FakeTwilioClient.instances), 1)
+
+    def test_live_send_requires_per_invocation_confirmation_or_noninteractive_opt_in(self):
+        sample = load_sample()
+        env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+        noninteractive_input = mock.Mock()
+        noninteractive_input.isatty.return_value = False
+        comms = sample.CompanyComms(
+            env=env,
+            client_factory=FakeTwilioClient,
+            input_stream=noninteractive_input,
+        )
+
+        with self.assertRaisesRegex(
+            sample.MessageValidationError,
+            "TTY confirmation or TWILIO_ALLOW_NONINTERACTIVE=true",
+        ):
+            comms.send_msg()
+
+        self.assertEqual(FakeTwilioClient.instances, [])
+
+    def test_unreadable_stdin_fails_closed_before_client_setup(self):
+        sample = load_sample()
+        env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+        unreadable_input = mock.Mock()
+        unreadable_input.isatty.side_effect = OSError("stdin unavailable")
+        comms = sample.CompanyComms(
+            env=env,
+            client_factory=FakeTwilioClient,
+            input_stream=unreadable_input,
+        )
+
+        with self.assertRaisesRegex(
+            sample.MessageValidationError,
+            "TTY confirmation or TWILIO_ALLOW_NONINTERACTIVE=true",
+        ):
+            comms.send_msg()
+
+        self.assertEqual(FakeTwilioClient.instances, [])
+
+    def test_interactive_live_send_requires_matching_one_shot_phrase(self):
+        sample = load_sample()
+        env = {
+            "TWILIO_SEND_LIVE": "true",
+            "TWILIO_CONFIRM_TO": "+12025550123",
+            "TWILIO_ACCOUNT_SID": VALID_ACCOUNT_SID,
+            "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "hello",
+        }
+        interactive_input = mock.Mock()
+        interactive_input.isatty.return_value = True
+        wrong_prompt = mock.Mock(return_value="send 9999")
+        comms = sample.CompanyComms(
+            env=env,
+            client_factory=FakeTwilioClient,
+            input_stream=interactive_input,
+            prompt_reader=wrong_prompt,
+        )
+
+        with self.assertRaisesRegex(
+            sample.MessageValidationError,
+            "Interactive confirmation did not match",
+        ):
+            comms.send_msg()
+
+        self.assertEqual(FakeTwilioClient.instances, [])
+        prompt = wrong_prompt.call_args.args[0]
+        self.assertIn("********0123", prompt)
+        self.assertNotIn("+12025550123", prompt)
+
+        confirmed = sample.CompanyComms(
+            env=env,
+            client_factory=FakeTwilioClient,
+            input_stream=interactive_input,
+            prompt_reader=mock.Mock(return_value="send 0123"),
+        ).send_msg()
+        self.assertEqual(confirmed.sid, "SM123")
 
     def test_python_live_send_log_level_requires_supported_opt_in(self):
         sample = load_sample()

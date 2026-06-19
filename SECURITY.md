@@ -47,8 +47,14 @@ Helpful reports include:
   shape check before dry-run output or live Twilio client construction.
 - Live mode must require a separate E.164 `TWILIO_CONFIRM_TO` value that matches
   the normalized `TWILIO_TO` recipient before credential or client setup.
+- Interactive live sends require a per-invocation confirmation phrase that
+  displays only a redacted recipient. Noninteractive runs fail closed unless
+  `TWILIO_ALLOW_NONINTERACTIVE=true` explicitly authorizes that invocation.
+  Treat this override as permission to send without a human checkpoint and
+  scope it as narrowly as possible.
 - Python and Node live provider requests use an explicit 30-second timeout;
-  automatic retries remain disabled because message creation is not idempotent.
+  Python sets `max_retries=0` and Node sets `autoRetry:false` because message
+  creation is not idempotent.
 - Live mode requires the canonical Account SID and auth-token ASCII hexadecimal
   shapes before client construction. This rejects malformed local
   configuration but does not establish credential validity or authorization.
