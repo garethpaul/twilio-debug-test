@@ -24,6 +24,7 @@ destination. Explicit input must take precedence even when it is invalid.
 ## Implementation
 
 - Add a small message-setting helper that distinguishes `None` from blank text.
+- Read an environment fallback only when its corresponding argument is omitted.
 - Preserve trimming for both explicit and environment values.
 - Add regressions for blank recipient, sender, and body overrides.
 - Assert that invalid explicit values never construct the injected client.
@@ -39,3 +40,4 @@ destination. Explicit input must take precedence even when it is invalid.
 - `make check`
 - `git diff --check`
 - Mutations restoring truthy fallback for explicit blanks must fail.
+- A failing environment mapping is not consulted for complete explicit input.

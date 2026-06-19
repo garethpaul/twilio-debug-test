@@ -23,6 +23,8 @@ URLs, phone numbers, message metadata, or credential-adjacent diagnostics.
 
 - Added shared identifier redaction to Python and Node.js success output.
 - Added safe CLI error formatting in both runtimes.
+- Allowlisted Node.js validation output by sample-owned error type so provider
+  exceptions cannot mimic trusted local message prefixes.
 - Passed the Node.js client-factory seam through `runCli` for provider-failure
   tests.
 - Added Python and Node.js tests proving fake secret-bearing diagnostics are not
@@ -33,7 +35,7 @@ URLs, phone numbers, message metadata, or credential-adjacent diagnostics.
 ## Verification
 
 - `make check`
-- `make -f /path/to/twilio-debug-test/Makefile check` outside the repository
+- `make -C "/path/to/twilio debug test" check` outside the repository
 - Python 3.10/3.12/3.14 and Node.js 20/22/24 hosted matrix
 - SID-redaction, provider-error, runner, action, and Makefile mutations rejected
 - `git diff --check`

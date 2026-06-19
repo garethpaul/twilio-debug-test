@@ -1,0 +1,16 @@
+{
+  "name": "twilio-debug-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Credential-safe Twilio debug logging samples for Node.js and Python",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "lint": "node --check test.js && node --check tests/test_js_contracts.js && node --check scripts/check-node-package.js",
+    "test": "node tests/test_js_contracts.js"
+  },
+  "dependencies": {
+    "twilio": "6.0.2"
+  }
+}

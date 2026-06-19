@@ -31,13 +31,33 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 - GitHub Actions uses immutable action pins, read-only repository permissions,
-  a fixed Ubuntu 24.04 runner, and a bounded runtime while exercising the
-  Python and Node.js sample checks.
+  credential-free checkout, a fixed Ubuntu 24.04 runner, and a bounded runtime
+  while exercising the Python and Node.js sample checks on every push and pull
+  request.
+- CodeQL analyzes GitHub Actions, Python, and JavaScript/TypeScript with an
+  immutable action pin. Its upload permission is scoped to the analysis job.
 - Command-line output must redact Twilio resource identifiers and must not emit
   unexpected provider error details that may contain credentials, phone
   numbers, request URLs, or message metadata.
+- Python and Node.js expose local validation details only for sample-owned error
+  types; provider-controlled message prefixes are never trusted.
 - Explicit blank Python message arguments must fail validation instead of
   falling back to an environment recipient, sender, or body.
+- Python and Node.js sender and recipient settings must pass the shared E.164
+  shape check before dry-run output or live Twilio client construction.
+- Live mode must require a separate E.164 `TWILIO_CONFIRM_TO` value that matches
+  the normalized `TWILIO_TO` recipient before credential or client setup.
+- Interactive live sends require a per-invocation confirmation phrase that
+  displays only a redacted recipient. Noninteractive runs fail closed unless
+  `TWILIO_ALLOW_NONINTERACTIVE=true` explicitly authorizes that invocation.
+  Treat this override as permission to send without a human checkpoint and
+  scope it as narrowly as possible.
+- Python and Node live provider requests use an explicit 30-second timeout;
+  Python sets `max_retries=0` and Node sets `autoRetry:false` because message
+  creation is not idempotent.
+- Live mode requires the canonical Account SID and auth-token ASCII hexadecimal
+  shapes before client construction. This rejects malformed local
+  configuration but does not establish credential validity or authorization.
 
 ## Service and API Notes
 
@@ -46,6 +66,15 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 ## Dependency and Supply Chain Security
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
+
+The Python sample pins its direct Twilio runtime dependency and the pip/pip-audit
+tool inputs. `make check` installs them in an isolated temporary environment,
+checks the resolved dependency set, and audits the runtime manifest without
+using Twilio credentials or making a live API request.
+
+The private Node dependency manifest pins `twilio@6.0.2` and requires Node.js
+20 or newer. `make check` installs the lockfile with lifecycle scripts disabled
+and audits the locked production graph without credentials or live sends.
 
 ## Safe Research Guidelines
 

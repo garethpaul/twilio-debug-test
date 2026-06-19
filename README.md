@@ -19,8 +19,8 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 Additional scan context:
 
 - Source directories: no top-level source directories detected
-- Dependency and build manifests: none detected
-- Entry points or build surfaces: none detected
+- Dependency and build manifests: pinned Python runtime and audit requirements
+- Entry points or build surfaces: Makefile, Python, and Node.js samples
 - Test-looking files: test.js, test.py
 
 ## Getting Started
@@ -40,11 +40,30 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
-- Run `make check` to check the Python and Node.js samples.
+- Run `make check` to check the Python and Node.js samples and the isolated
+  Python package environment. The package gate installs the pinned runtime and
+  audit manifests, verifies `twilio==9.10.9`, runs `pip check`, and audits the
+  runtime manifest for known vulnerabilities.
 - Set `TWILIO_TO`, `TWILIO_FROM`, and `TWILIO_BODY` before running either
   sample. Both samples trim required settings, dry-run by default, and only send
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
-  Message bodies are limited to 1600 characters in both samples.
+  Live mode also requires `TWILIO_CONFIRM_TO` to be a valid E.164 value that
+  exactly matches the normalized `TWILIO_TO` recipient. This separate
+  confirmation is checked before credentials or a Twilio client are used.
+  Each interactive invocation then requires typing `send ####`, where `####`
+  is the recipient's final four digits and the prompt displays only the
+  redacted recipient. Noninteractive jobs fail closed unless
+  `TWILIO_ALLOW_NONINTERACTIVE=true` is explicitly set for that invocation.
+  Python and Node live provider requests use an explicit 30-second timeout;
+  automatic retries are explicitly disabled to avoid duplicate message
+  creation.
+  Live mode requires an Account SID with `AC` plus 32 ASCII hexadecimal
+  characters and an auth token with exactly 32 ASCII hexadecimal characters;
+  both shapes are checked before Twilio client construction. This local shape
+  check does not prove that credentials are active or authorized.
+  Sender and recipient values must use E.164 form (`+` followed by 2-15 ASCII
+  digits with a nonzero first digit). Message bodies are limited to 1600
+  characters in both samples.
 - Python message arguments fall back to environment settings only when omitted;
   explicit blank recipients, senders, and bodies fail validation before dry-run
   output or live client setup.
@@ -56,6 +75,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The Node.js sample exposes a testable CLI runner that reports expected
   configuration errors as concise messages and exits non-zero. Its client
   factory can also be injected through the runner to verify provider failures.
+- Node.js CLI validation messages are allowlisted by sample-owned error type,
+  not by provider-controlled message prefix.
 - Successful live sends return the full Twilio result to callers but print only
   a redacted Message SID in both command-line samples.
 - The Node.js message payload path reports all missing message setting names
@@ -76,19 +97,44 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
 - GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
-  with Node.js 20, 22, and 24 for pushes and pull requests on Ubuntu 24.04.
+  with Node.js 20, 22, and 24 for every push and pull request on Ubuntu 24.04,
+  using pinned actions, read-only permissions, and credential-free checkout.
+- A separate job in that workflow runs pinned CodeQL analysis for GitHub
+  Actions, Python, and JavaScript/TypeScript. Only that job receives the
+  `security-events: write` permission needed to upload code-scanning results.
+- Each hosted matrix job reruns the full gate from a temporary working
+  directory to enforce path-independent Makefile behavior.
+- `requirements.txt` pins the Python Twilio helper used by live sends;
+  `requirements-dev.txt` pins pip and pip-audit for the canonical package gate.
+- `package.json` pins `twilio@6.0.2`, requires Node.js 20 or newer, and remains
+  private. `package-lock.json` makes its production dependency graph
+  reproducible. The canonical gate installs it with lifecycle scripts disabled
+  and runs a production `npm audit` before the baseline completes.
 - The baseline script checks required project files, completed docs-plan
   metadata, verification documentation, and local editor metadata hygiene.
 - Node.js and Python tests keep live-send logging at `info` unless
   `TWILIO_LOG_LEVEL` explicitly opts into a supported level.
+- Python and Node.js fake-provider tests require live sends to stop before
+  credential or client setup when stdin is noninteractive, unreadable, or the
+  redacted one-shot confirmation phrase does not match. Separate tests cover
+  the explicit noninteractive automation opt-in.
 - Node.js tests cover the live-send payload and log-level assignment with a
   fake Twilio client factory. They also cover concise CLI validation errors
   through the exported runner, including combined missing message-setting and
   credential reporting, generic provider-error handling, and resource-ID
   redaction. Python and Node.js tests also require oversized message
-  bodies to fail before dry-run output or live Twilio client setup.
+  bodies and malformed phone values to fail before dry-run output or live
+  Twilio client setup. Live-mode credential tests require exact ASCII
+  hexadecimal lengths, reject malformed values before fake client factories
+  run, and confirm that dry-run mode remains credential-free.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
+- See `docs/plans/2026-06-14-node-dependency-manifest.md` for the exact Node
+  helper pin, lockfile, script-disabled install, and vulnerability audit gate.
+- See `docs/plans/2026-06-14-codeql-analysis.md` for the pinned,
+  least-privilege code-scanning contract.
+- See `docs/plans/2026-06-16-provider-request-timeout.md` for the explicit
+  Python and Node provider request-timeout boundary.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -127,8 +173,20 @@ When the required SDK or runtime is unavailable, use static checks and source re
   body length guard.
 - See `docs/plans/2026-06-10-ci-runtime-matrix.md` for the pinned hosted
   compatibility gate.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the fail-closed hosted workflow
+  contract.
 - See `docs/plans/2026-06-12-python-explicit-message-overrides.md` for the
   explicit Python argument precedence boundary.
+- See `docs/plans/2026-06-12-e164-phone-validation.md` for shared sender and
+  recipient format validation.
+- See `docs/plans/2026-06-13-twilio-credential-shapes.md` for fail-fast Account
+  SID and auth-token shape validation.
+- See `docs/plans/2026-06-13-live-recipient-confirmation.md` for the explicit
+  live-recipient confirmation boundary.
+- See `docs/plans/2026-06-13-python-dependency-manifest.md` for the pinned
+  Python runtime and isolated package-audit gate.
+- See `docs/plans/2026-06-14-make-root-protection.md` for Makefile-derived,
+  override-resistant repository verification paths.
 
 ## Contributing
 

@@ -9,8 +9,26 @@ NODE_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-node-credential-errors.md"
 NODE_MESSAGE_SETTINGS_PLAN = DOCS_PLANS / "2026-06-09-node-message-setting-errors.md"
 SCRIPTED_BASELINE_PLAN = DOCS_PLANS / "2026-06-09-scripted-baseline-check.md"
 MESSAGE_BODY_LENGTH_PLAN = DOCS_PLANS / "2026-06-09-message-body-length.md"
+CI_BASELINE_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 CI_RUNTIME_MATRIX_PLAN = DOCS_PLANS / "2026-06-10-ci-runtime-matrix.md"
 CLI_OUTPUT_PRIVACY_PLAN = DOCS_PLANS / "2026-06-10-cli-output-privacy.md"
+E164_PHONE_VALIDATION_PLAN = DOCS_PLANS / "2026-06-12-e164-phone-validation.md"
+LIVE_RECIPIENT_CONFIRMATION_PLAN = (
+    DOCS_PLANS / "2026-06-13-live-recipient-confirmation.md"
+)
+PYTHON_DEPENDENCY_MANIFEST_PLAN = (
+    DOCS_PLANS / "2026-06-13-python-dependency-manifest.md"
+)
+NODE_DEPENDENCY_MANIFEST_PLAN = (
+    DOCS_PLANS / "2026-06-14-node-dependency-manifest.md"
+)
+CODEQL_ANALYSIS_PLAN = DOCS_PLANS / "2026-06-14-codeql-analysis.md"
+PROVIDER_REQUEST_TIMEOUT_PLAN = (
+    DOCS_PLANS / "2026-06-16-provider-request-timeout.md"
+)
+LIVE_EXECUTION_CONFIRMATION_PLAN = (
+    DOCS_PLANS / "2026-06-19-live-execution-confirmation.md"
+)
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -22,18 +40,45 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(NODE_MESSAGE_SETTINGS_PLAN, plans)
         self.assertIn(SCRIPTED_BASELINE_PLAN, plans)
         self.assertIn(MESSAGE_BODY_LENGTH_PLAN, plans)
+        self.assertIn(CI_BASELINE_PLAN, plans)
         self.assertIn(CI_RUNTIME_MATRIX_PLAN, plans)
         self.assertIn(CLI_OUTPUT_PRIVACY_PLAN, plans)
+        self.assertIn(E164_PHONE_VALIDATION_PLAN, plans)
+        self.assertIn(LIVE_RECIPIENT_CONFIRMATION_PLAN, plans)
+        self.assertIn(PYTHON_DEPENDENCY_MANIFEST_PLAN, plans)
+        self.assertIn(NODE_DEPENDENCY_MANIFEST_PLAN, plans)
+        self.assertIn(CODEQL_ANALYSIS_PLAN, plans)
+        self.assertIn(PROVIDER_REQUEST_TIMEOUT_PLAN, plans)
+        self.assertIn(LIVE_EXECUTION_CONFIRMATION_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
             self.assertIn("Status: Completed", text)
             self.assertIn("make check", text)
 
+        timeout_plan = PROVIDER_REQUEST_TIMEOUT_PLAN.read_text(encoding="utf-8")
+        self.assertIn(
+            "Repository and external-directory `make check` passed",
+            timeout_plan,
+        )
+        self.assertIn("Four hostile timeout mutations were rejected", timeout_plan)
+
     def test_check_gate_runs_scripted_baseline(self):
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 
         self.assertIn('"$(ROOT)/scripts/check-baseline.sh"', makefile)
+        self.assertIn(
+            'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"',
+            makefile,
+        )
+        self.assertIn(
+            'cd "$(ROOT)" && $(NPM) ci --ignore-scripts --no-audit --fund=false',
+            makefile,
+        )
+        self.assertIn(
+            'cd "$(ROOT)" && $(NPM) audit --omit=dev --audit-level=low',
+            makefile,
+        )
 
 
 if __name__ == "__main__":

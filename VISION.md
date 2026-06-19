@@ -21,23 +21,39 @@ Priority:
 - Keep default sample execution in dry-run mode
 - Normalize required settings before validation and redaction
 - Keep explicit Python message arguments authoritative, including invalid blanks
+- Validate sender and recipient settings consistently as E.164 values
+- Require a separate matching recipient confirmation before any live-send
+  credential or client setup
+- Bound Python and Node provider requests without enabling duplicate-prone
+  automatic retries
 - Bound sample message bodies before dry-run output or live send setup
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
 - Keep a scriptable baseline guard for required files and maintenance metadata
 - Report missing Node.js message settings together before sample send setup
 - Report missing Twilio live-send credentials together before client setup
+- Reject malformed Account SID and auth-token shapes before client setup
 - Keep live-send debug logging as an explicit opt-in across language samples
 - Keep language log-level aliases normalized before applying Twilio settings
 - Keep live-send paths testable with mocked clients
+- Require a redacted, per-invocation TTY confirmation or a narrowly scoped
+  explicit noninteractive authorization before every live send
+- Keep provider message creation retries explicitly disabled in both runtimes
 - Keep live-send Message SIDs redacted in command-line output
 - Keep unexpected provider diagnostics out of user-facing stderr
 - Allowlist sample-owned Python validation exceptions instead of broad built-in types
+- Allowlist sample-owned Node.js validation exceptions instead of message prefixes
 - Keep the Python and Node.js compatibility matrix enforced in hosted CI
+- Keep hosted checks unfiltered across branches and independent of caller paths
+- Keep pinned CodeQL coverage for GitHub Actions, Python, and
+  JavaScript/TypeScript with job-scoped upload permission
+- Keep the Python Twilio runtime and package-audit inputs pinned and exercised
+  by the canonical gate
+- Keep the Node Twilio runtime exactly pinned, locked, script-disabled during
+  install, and audited by the canonical gate
 
 Next priorities:
 
-- Add language-specific dependency manifests
 - Add setup notes for each language sample
 - Add deeper redaction examples for shared debug logs
 
