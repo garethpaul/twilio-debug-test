@@ -1,5 +1,9 @@
 # Changes
 
+- Hardened `make check` against Make-syntax tool expansion, caller shell and
+  Makefile identity replacement, execution-skipping flags, and startup-file
+  configuration while preserving literal Python, Node.js, and npm overrides.
+
 ## 2026-06-19
 
 - Added a fail-closed per-invocation live-send gate: interactive runs require a

@@ -94,6 +94,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make check`
 - `scripts/check-baseline.sh`
+- When invoked with the checked-in Makefile alone, verification protects its
+  repository root and shell, accepts only literal Python, Node.js, and npm
+  overrides, and rejects skipped-mode flags, populated `MAKEFILES`, and
+  `MAKEFILE_LIST` replacement. Startup files and later caller `-f` files remain
+  outside the documented GNU Make trust boundary.
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
 - GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
@@ -187,6 +192,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   Python runtime and isolated package-audit gate.
 - See `docs/plans/2026-06-14-make-root-protection.md` for Makefile-derived,
   override-resistant repository verification paths.
+- See `docs/plans/2026-06-21-make-authority-hardening.md` for tool, shell,
+  flag, startup-file, and Makefile-identity authority checks.
 
 ## Contributing
 
