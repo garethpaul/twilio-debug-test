@@ -41,9 +41,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Run repository checks
-        run: make check
+        run: scripts/run-make.sh check
       - name: Verify external working directory
-        run: cd "$(mktemp -d)" && make -C "$GITHUB_WORKSPACE" check
+        run: cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/scripts/run-make.sh" check
 
   codeql:
     name: CodeQL (${{ matrix.language }})

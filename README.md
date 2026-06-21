@@ -92,16 +92,20 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
+- `scripts/run-make.sh check`
 - `make check`
 - `scripts/check-baseline.sh`
-- When invoked with the checked-in Makefile alone, verification protects its
-  repository root and shell, accepts only literal Python, Node.js, and npm
-  overrides, and rejects skipped-mode flags, populated `MAKEFILES`, and
-  `MAKEFILE_LIST` replacement. Startup files and later caller `-f` files remain
-  outside the documented GNU Make trust boundary.
+- The canonical wrapper accepts exactly `check` or `lint`, resolves its physical
+  checkout through a bounded symbolic-link chain, clears `MAKEFILES`,
+  `MAKEFLAGS`, `MFLAGS`, `MAKEOVERRIDES`, and `GNUMAKEFLAGS`, and invokes the
+  physical repository Makefile with fixed system tools. Literal `PYTHON`,
+  `NODE`, and `NPM` executable overrides remain caller-controlled.
+- Direct `make` invocation remains a caller-authority boundary: GNU Make can
+  execute startup files, earlier or later `-f` files, and `--eval` before or
+  outside repository recipes. Use the canonical wrapper for trusted checks.
 - `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `node tests/test_js_contracts.js`
-- GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 paired
+- GitHub Actions runs `scripts/run-make.sh check` on Python 3.10, 3.12, and 3.14 paired
   with Node.js 20, 22, and 24 for every push and pull request on Ubuntu 24.04,
   using pinned actions, read-only permissions, and credential-free checkout.
 - A separate job in that workflow runs pinned CodeQL analysis for GitHub

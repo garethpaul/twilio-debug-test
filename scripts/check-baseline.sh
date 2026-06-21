@@ -26,6 +26,7 @@ for path in \
   "requirements.txt" \
   "requirements-dev.txt" \
   "SECURITY.md" \
+  "scripts/run-make.sh" \
   "VISION.md" \
   "test.js" \
   "test.py" \
@@ -289,9 +290,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Run repository checks
-        run: make check
+        run: scripts/run-make.sh check
       - name: Verify external working directory
-        run: cd "$(mktemp -d)" && make -C "$GITHUB_WORKSPACE" check
+        run: cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/scripts/run-make.sh" check
 
   codeql:
     name: CodeQL (${{ matrix.language }})
@@ -350,8 +351,8 @@ for workflow_contract in \
   "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4" \
   "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3" \
   "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0" \
-  "run: make check" \
-  'run: cd "$(mktemp -d)" && make -C "$GITHUB_WORKSPACE" check'; do
+  "run: scripts/run-make.sh check" \
+  'run: cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/scripts/run-make.sh" check'; do
   if ! grep -Fq -- "$workflow_contract" "$WORKFLOW"; then
     printf '%s\n' "GitHub Actions workflow is missing required contract: $workflow_contract" >&2
     exit 1
@@ -378,6 +379,30 @@ if grep -Eq 'uses: [^ ]+@(main|master|v[0-9]+)([[:space:]]|$)' "$WORKFLOW"; then
   printf '%s\n' "GitHub Actions must be pinned to immutable commit SHAs." >&2
   exit 1
 fi
+
+MAKE_WRAPPER="$ROOT_DIR/scripts/run-make.sh"
+if [ ! -x "$MAKE_WRAPPER" ]; then
+  printf '%s\n' "scripts/run-make.sh must be executable." >&2
+  exit 1
+fi
+
+for wrapper_contract in \
+  'case $0 in' \
+  'if [ "$link_count" -gt 40 ]' \
+  '/usr/bin/readlink -n "$script_path"' \
+  'usage: scripts/run-make.sh check|lint' \
+  'check|lint)' \
+  '-u MAKEFILES' \
+  '-u MAKEFLAGS' \
+  '-u MFLAGS' \
+  '-u MAKEOVERRIDES' \
+  '-u GNUMAKEFLAGS' \
+  '/usr/bin/make --no-print-directory -f "$ROOT/Makefile" "$target"'; do
+  if ! grep -Fq -- "$wrapper_contract" "$MAKE_WRAPPER"; then
+    printf '%s\n' "Make wrapper is missing required contract: $wrapper_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq '"$$ROOT/scripts/check-baseline.sh"' "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2

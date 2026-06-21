@@ -11,6 +11,8 @@ identity replacement.
 ## Requirements
 
 - Preserve literal Python, Node.js, and npm executable overrides.
+- Provide a fixed-target entrypoint before GNU Make parses caller-controlled
+  startup files, options, evaluations, or additional makefiles.
 - Reject Make-syntax tools before expansion and keep root/shell authority local.
 - Prove repository and external-directory `make check` behavior.
 - Keep all Twilio credentials unset and all live provider calls disabled.
@@ -18,8 +20,12 @@ identity replacement.
 ## Work Completed
 
 - Bound root, shell, tool, flag, startup-file, and Makefile identity authority.
+- Added `scripts/run-make.sh` with exact `check|lint` targets, five-variable Make
+  environment sanitization, fixed tools, and byte-preserving physical symlink
+  resolution; both hosted verification steps use this entrypoint.
 - Added executable adversarial regression coverage to `make check`.
-- Preserved the documented GNU Make startup and later-`-f` trust boundary.
+- Reproduced raw `-n`/`-i` plus `--eval`, `GNUMAKEFLAGS`, executable
+  `MAKEFILES`, and earlier/later `-f` authority before proving wrapper exclusion.
 
 ## Verification
 
@@ -30,5 +36,6 @@ identity replacement.
 ## Scope Boundaries
 
 No sample behavior, dependency version, credential handling, provider request,
-workflow, publishing, or deployment changed. GNU Make startup files can execute
-during parsing, and later caller-supplied `-f` files remain outside authority.
+publishing, or deployment changed. Literal `PYTHON`, `NODE`, and `NPM` paths
+remain caller authority. Direct GNU Make startup files, options, evaluations,
+and earlier or later caller-supplied `-f` files remain outside the wrapper.
