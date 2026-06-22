@@ -29,6 +29,7 @@ PROVIDER_REQUEST_TIMEOUT_PLAN = (
 LIVE_EXECUTION_CONFIRMATION_PLAN = (
     DOCS_PLANS / "2026-06-19-live-execution-confirmation.md"
 )
+MAKE_AUTHORITY_PLAN = DOCS_PLANS / "2026-06-21-make-authority-hardening.md"
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -50,6 +51,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(CODEQL_ANALYSIS_PLAN, plans)
         self.assertIn(PROVIDER_REQUEST_TIMEOUT_PLAN, plans)
         self.assertIn(LIVE_EXECUTION_CONFIRMATION_PLAN, plans)
+        self.assertIn(MAKE_AUTHORITY_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
@@ -66,17 +68,17 @@ class DocsPlansTest(unittest.TestCase):
     def test_check_gate_runs_scripted_baseline(self):
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 
-        self.assertIn('"$(ROOT)/scripts/check-baseline.sh"', makefile)
+        self.assertIn('"$$ROOT/scripts/check-baseline.sh"', makefile)
         self.assertIn(
-            'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"',
+            'PYTHON="$$PYTHON" "$$ROOT/scripts/check-python-package.sh"',
             makefile,
         )
         self.assertIn(
-            'cd "$(ROOT)" && $(NPM) ci --ignore-scripts --no-audit --fund=false',
+            'cd "$$ROOT" && "$$NPM" ci --ignore-scripts --no-audit --fund=false',
             makefile,
         )
         self.assertIn(
-            'cd "$(ROOT)" && $(NPM) audit --omit=dev --audit-level=low',
+            'cd "$$ROOT" && "$$NPM" audit --omit=dev --audit-level=low',
             makefile,
         )
 

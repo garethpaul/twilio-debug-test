@@ -1,5 +1,12 @@
 # Changes
 
+- Added a fixed-target, physical-root Make wrapper that clears GNU Make startup
+  and option channels before hosted or contributor verification while keeping
+  literal Python, Node.js, and npm executable selection explicit.
+- Hardened `make check` against Make-syntax tool expansion, caller shell and
+  Makefile identity replacement, execution-skipping flags, and startup-file
+  configuration while preserving literal Python, Node.js, and npm overrides.
+
 ## 2026-06-19
 
 - Added a fail-closed per-invocation live-send gate: interactive runs require a

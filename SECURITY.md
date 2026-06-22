@@ -76,6 +76,13 @@ The private Node dependency manifest pins `twilio@6.0.2` and requires Node.js
 20 or newer. `make check` installs the lockfile with lifecycle scripts disabled
 and audits the locked production graph without credentials or live sends.
 
+Trusted repository verification enters through `scripts/run-make.sh check`.
+The wrapper accepts only `check` or `lint`, resolves the physical checked-in
+script before selecting the Makefile, clears all inherited GNU Make control
+variables, and invokes fixed system tools. Literal `PYTHON`, `NODE`, and `NPM`
+paths remain an explicit caller boundary. Direct GNU Make options, startup
+files, `--eval`, and additional `-f` files execute outside this trusted entrypoint.
+
 ## Safe Research Guidelines
 
 Good-faith research is welcome when it stays within these boundaries:

@@ -26,6 +26,7 @@ for path in \
   "requirements.txt" \
   "requirements-dev.txt" \
   "SECURITY.md" \
+  "scripts/run-make.sh" \
   "VISION.md" \
   "test.js" \
   "test.py" \
@@ -45,7 +46,9 @@ for path in \
   "docs/plans/2026-06-14-make-root-protection.md" \
   "docs/plans/2026-06-14-node-dependency-manifest.md" \
   "docs/plans/2026-06-14-codeql-analysis.md" \
+  "docs/plans/2026-06-21-make-authority-hardening.md" \
   "scripts/check-node-package.js" \
+  "scripts/test-makefile-authority.sh" \
   "scripts/check-python-package.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -287,9 +290,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Run repository checks
-        run: make check
+        run: scripts/run-make.sh check
       - name: Verify external working directory
-        run: cd "$(mktemp -d)" && make -C "$GITHUB_WORKSPACE" check
+        run: cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/scripts/run-make.sh" check
 
   codeql:
     name: CodeQL (${{ matrix.language }})
@@ -348,8 +351,8 @@ for workflow_contract in \
   "github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4" \
   "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3" \
   "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0" \
-  "run: make check" \
-  'run: cd "$(mktemp -d)" && make -C "$GITHUB_WORKSPACE" check'; do
+  "run: scripts/run-make.sh check" \
+  'run: cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/scripts/run-make.sh" check'; do
   if ! grep -Fq -- "$workflow_contract" "$WORKFLOW"; then
     printf '%s\n' "GitHub Actions workflow is missing required contract: $workflow_contract" >&2
     exit 1
@@ -377,7 +380,31 @@ if grep -Eq 'uses: [^ ]+@(main|master|v[0-9]+)([[:space:]]|$)' "$WORKFLOW"; then
   exit 1
 fi
 
-if ! grep -Fq '"$(ROOT)/scripts/check-baseline.sh"' "$MAKEFILE"; then
+MAKE_WRAPPER="$ROOT_DIR/scripts/run-make.sh"
+if [ ! -x "$MAKE_WRAPPER" ]; then
+  printf '%s\n' "scripts/run-make.sh must be executable." >&2
+  exit 1
+fi
+
+for wrapper_contract in \
+  'case $0 in' \
+  'if [ "$link_count" -gt 40 ]' \
+  '/usr/bin/readlink -n "$script_path"' \
+  'usage: scripts/run-make.sh check|lint' \
+  'check|lint)' \
+  '-u MAKEFILES' \
+  '-u MAKEFLAGS' \
+  '-u MFLAGS' \
+  '-u MAKEOVERRIDES' \
+  '-u GNUMAKEFLAGS' \
+  '/usr/bin/make --no-print-directory -f "$ROOT/Makefile" "$target"'; do
+  if ! grep -Fq -- "$wrapper_contract" "$MAKE_WRAPPER"; then
+    printf '%s\n' "Make wrapper is missing required contract: $wrapper_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq '"$$ROOT/scripts/check-baseline.sh"' "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
   exit 1
 fi
@@ -388,27 +415,41 @@ import re
 import sys
 
 makefile = Path(sys.argv[1]).read_text(encoding="utf-8")
-root_declaration = "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))"
+root_declaration = "override ROOT := $(REPOSITORY_ROOT)"
 assignments = re.findall(r"^(?:override\s+)?ROOT\s*[:+?]?=", makefile, re.MULTILINE)
-if len(assignments) != 1 or makefile.count(root_declaration) != 1:
-    raise SystemExit("Makefile must contain exactly one protected repository-root declaration.")
-if makefile.count(f"{root_declaration}\nPYTHON ?= python3\nNODE ?= node\nNPM ?= npm") != 1:
-    raise SystemExit("Makefile must keep the protected root before tool overrides.")
+if (
+    len(assignments) != 1
+    or makefile.splitlines().count(root_declaration) != 1
+    or makefile.splitlines().count("$(PUBLIC_TARGETS): override ROOT := $(REPOSITORY_ROOT)") != 1
+):
+    raise SystemExit("Makefile must contain global and public-target root protection.")
+for contract in (
+    "override PYTHON := $(value PYTHON)",
+    "override NODE := $(value NODE)",
+    "override NPM := $(value NPM)",
+    "override SHELL := /bin/sh",
+    "MAKEFLAGS must not be overridden for repository verification",
+    "MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone",
+    "MAKEFILE_LIST must not be overridden",
+):
+    if contract not in makefile:
+        raise SystemExit(f"Makefile is missing authority contract: {contract}")
 PY
 
 for make_contract in \
-  '.PHONY: build check lint node-package-check package-check test verify' \
+  '.PHONY: __repository-make-authority build check lint node-package-check package-check root-test test verify' \
   'test: lint' \
   'build: lint' \
   'verify: lint test build' \
-  'check: verify package-check' \
-  'cd "$(ROOT)" && $(PYTHON)' \
-  'cd "$(ROOT)" && $(NODE)' \
-  'cd "$(ROOT)" && $(NPM) ci --ignore-scripts --no-audit --fund=false' \
-  'cd "$(ROOT)" && $(NPM) audit --omit=dev --audit-level=low' \
-  'cd "$(ROOT)" && $(NODE) scripts/check-node-package.js' \
-  'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"' \
-  '"$(ROOT)/scripts/check-baseline.sh"'; do
+  'check: root-test verify package-check' \
+  'cd "$$ROOT" && "$$PYTHON"' \
+  'cd "$$ROOT" && "$$NODE"' \
+  'cd "$$ROOT" && "$$NPM" ci --ignore-scripts --no-audit --fund=false' \
+  'cd "$$ROOT" && "$$NPM" audit --omit=dev --audit-level=low' \
+  'cd "$$ROOT" && "$$NODE" scripts/check-node-package.js' \
+  'PYTHON="$$PYTHON" "$$ROOT/scripts/check-python-package.sh"' \
+  '/bin/sh "$$ROOT/scripts/test-makefile-authority.sh"' \
+  '"$$ROOT/scripts/check-baseline.sh"'; do
   if ! grep -Fq -- "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile is missing root-independent contract: $make_contract" >&2
     exit 1
@@ -417,6 +458,10 @@ done
 
 if ! grep -Fq 'docs/plans/2026-06-14-make-root-protection.md' "$README"; then
   printf '%s\n' "README.md must index Make root protection evidence." >&2
+  exit 1
+fi
+if ! grep -Fq 'docs/plans/2026-06-21-make-authority-hardening.md' "$README"; then
+  printf '%s\n' "README.md must index Make authority hardening evidence." >&2
   exit 1
 fi
 
@@ -482,8 +527,8 @@ done
 for suite_contract in \
   'NODE_DEPENDENCY_MANIFEST_PLAN' \
   'CODEQL_ANALYSIS_PLAN' \
-  '$(NPM) ci --ignore-scripts --no-audit --fund=false' \
-  '$(NPM) audit --omit=dev --audit-level=low'; do
+  '"$$NPM" ci --ignore-scripts --no-audit --fund=false' \
+  '"$$NPM" audit --omit=dev --audit-level=low'; do
   if ! grep -Fq -- "$suite_contract" "$ROOT_DIR/tests/test_docs_plans.py"; then
     printf '%s\n' "Docs-plan suite is missing Node package contract: $suite_contract" >&2
     exit 1
@@ -537,7 +582,7 @@ if [ "$(grep -Fc 'env -u PYTHONPATH' "$ROOT_DIR/scripts/check-python-package.sh"
   exit 1
 fi
 
-if ! grep -Fq 'PYTHON="$(PYTHON)" "$(ROOT)/scripts/check-python-package.sh"' "$MAKEFILE"; then
+if ! grep -Fq 'PYTHON="$$PYTHON" "$$ROOT/scripts/check-python-package.sh"' "$MAKEFILE"; then
   printf '%s\n' "Makefile must run the isolated Python package gate." >&2
   exit 1
 fi
