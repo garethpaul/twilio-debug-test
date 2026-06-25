@@ -272,6 +272,35 @@ class CompanyCommsTest(unittest.TestCase):
 
         self.assertEqual(FakeTwilioClient.instances, [])
 
+    def test_live_send_rejects_malformed_credentials_before_prompting(self):
+        sample = load_sample()
+        interactive_input = mock.Mock()
+        interactive_input.isatty.return_value = True
+        prompt_reader = mock.Mock(return_value="send 0123")
+        comms = sample.CompanyComms(
+            env={
+                "TWILIO_SEND_LIVE": "true",
+                "TWILIO_CONFIRM_TO": "+12025550123",
+                "TWILIO_ACCOUNT_SID": "not-an-account-sid",
+                "TWILIO_AUTH_TOKEN": VALID_AUTH_TOKEN,
+                "TWILIO_TO": "+12025550123",
+                "TWILIO_FROM": "+12025550124",
+                "TWILIO_BODY": "hello",
+            },
+            client_factory=FakeTwilioClient,
+            input_stream=interactive_input,
+            prompt_reader=prompt_reader,
+        )
+
+        with self.assertRaisesRegex(
+            sample.CredentialValidationError,
+            "TWILIO_ACCOUNT_SID has an invalid format",
+        ):
+            comms.send_msg()
+
+        prompt_reader.assert_not_called()
+        self.assertEqual(FakeTwilioClient.instances, [])
+
     def test_dry_run_ignores_malformed_credentials(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={

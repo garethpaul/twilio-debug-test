@@ -1,5 +1,37 @@
 # Changes
 
+## 2026-06-25 08:08 PDT - P2 - Validate credentials before prompting
+
+### Summary
+Python and Node.js live sends now reject missing or malformed credentials before asking an operator for per-invocation execution confirmation.
+
+### Work completed
+- Added cross-runtime regression coverage proving invalid credentials do not invoke the prompt or client factory.
+- Reordered live-send preflight while preserving recipient matching before credentials and client construction after confirmation.
+
+### Threads
+- None; work completed directly in this maintenance cycle.
+
+### Files changed
+- `test.py`, `test.js` — moved credential preflight ahead of interactive confirmation.
+- `tests/`, `scripts/`, and maintained docs — added ordering contracts, tests, and evidence.
+
+### Validation
+- Focused Python and Node.js tests — passed after reproducing one prompt call in each runtime before the fix.
+- Full repository and external-directory `make check` — passed, including dependency audits and the canonical baseline.
+- Two hostile prompt-order mutations — rejected by the canonical baseline.
+
+### Bugs / findings
+- P2: malformed live-send credentials previously triggered an unnecessary operator confirmation prompt.
+
+### Blockers
+- None.
+
+### Next action
+- Open the PR, run Codex review, and merge only after hosted checks pass.
+
+Live-send credential validation completes before interactive execution confirmation.
+
 - Added a fixed-target, physical-root Make wrapper that clears GNU Make startup
   and option channels before hosted or contributor verification while keeping
   literal Python, Node.js, and npm executable selection explicit.

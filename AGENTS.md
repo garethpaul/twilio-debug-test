@@ -43,6 +43,7 @@
 ## Safety and gotchas
 
 - Detected references to Twilio. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- Live-send credential validation completes before interactive execution confirmation.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-python-log-level-opt-in.md` for Python live-send log-level opt-in coverage.
