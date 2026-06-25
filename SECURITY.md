@@ -52,6 +52,7 @@ Helpful reports include:
   `TWILIO_ALLOW_NONINTERACTIVE=true` explicitly authorizes that invocation.
   Treat this override as permission to send without a human checkpoint and
   scope it as narrowly as possible.
+- Live-send credential validation completes before interactive execution confirmation.
 - Python and Node live provider requests use an explicit 30-second timeout;
   Python sets `max_retries=0` and Node sets `autoRetry:false` because message
   creation is not idempotent.

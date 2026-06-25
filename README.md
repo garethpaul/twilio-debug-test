@@ -49,7 +49,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   a live SMS when `TWILIO_SEND_LIVE=true` is set with valid Twilio credentials.
   Live mode also requires `TWILIO_CONFIRM_TO` to be a valid E.164 value that
   exactly matches the normalized `TWILIO_TO` recipient. This separate
-  confirmation is checked before credentials or a Twilio client are used.
+  recipient match is checked before credential preflight or client setup.
+  Live-send credential validation completes before interactive execution confirmation.
   Each interactive invocation then requires typing `send ####`, where `####`
   is the recipient's final four digits and the prompt displays only the
   redacted recipient. Noninteractive jobs fail closed unless

@@ -47,6 +47,7 @@ for path in \
   "docs/plans/2026-06-14-node-dependency-manifest.md" \
   "docs/plans/2026-06-14-codeql-analysis.md" \
   "docs/plans/2026-06-21-make-authority-hardening.md" \
+  "docs/plans/2026-06-25-credential-preflight-before-prompt.md" \
   "scripts/check-node-package.js" \
   "scripts/test-makefile-authority.sh" \
   "scripts/check-python-package.sh" \
@@ -62,6 +63,8 @@ for credential_contract in \
   'validate_credentials(account_sid, auth_token)' \
   'validateCredentials(accountSid, authToken)' \
   'test_live_send_rejects_malformed_credentials_before_client_setup' \
+  'test_live_send_rejects_malformed_credentials_before_prompting' \
+  'malformed credentials must reject before prompting' \
   'malformed credentials must reject'; do
   if ! grep -Fq -- "$credential_contract" "$ROOT_DIR/test.py" && \
      ! grep -Fq -- "$credential_contract" "$ROOT_DIR/test.js" && \
@@ -149,37 +152,48 @@ ordering_contracts = (
         "test.py",
         "if not should_send_live(self.env):",
         'validate_live_recipient(self.env, payload["to"])',
-        "confirm_live_execution(",
         "missing = [",
+        "validate_credentials(account_sid, auth_token)",
+        "confirm_live_execution(",
         "client_factory = self.client_factory",
     ),
     (
         "test.js",
         "if (!shouldSendLive(env)) {",
         "validateLiveRecipient(env, payload.to);",
-        "await confirmLiveExecution(env, payload.to, confirmationOptions);",
         "const missingCredentials = missingSettings",
+        "validateCredentials(accountSid, authToken);",
+        "await confirmLiveExecution(env, payload.to, confirmationOptions);",
         "const createClient = clientFactory",
     ),
 )
-for relative_path, dry_run, recipient_confirmation, execution_confirmation, credentials, client_setup in ordering_contracts:
+for relative_path, dry_run, recipient_confirmation, credentials, credential_validation, execution_confirmation, client_setup in ordering_contracts:
     source = (root / relative_path).read_text(encoding="utf-8")
     positions = tuple(
         source.index(marker)
         for marker in (
             dry_run,
             recipient_confirmation,
-            execution_confirmation,
             credentials,
+            credential_validation,
+            execution_confirmation,
             client_setup,
         )
     )
     if positions != tuple(sorted(positions)):
         raise SystemExit(
-            "{} must confirm the live recipient and this invocation after the "
-            "dry-run branch and before credential or client setup.".format(relative_path)
+            "{} must validate the live recipient and credentials before the "
+            "per-invocation prompt, then construct the client afterward.".format(relative_path)
         )
 PY
+
+credential_preflight_guidance='Live-send credential validation completes before interactive execution confirmation.'
+for credential_preflight_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq -- "$credential_preflight_guidance" "$ROOT_DIR/$credential_preflight_doc"; then
+    printf '%s\n' "$credential_preflight_doc must document credential preflight before prompting." >&2
+    exit 1
+  fi
+done
 
 for e164_contract in \
   'E164_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{1,14}$")' \

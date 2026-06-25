@@ -170,8 +170,6 @@ async function sendMessage(env, clientFactory, confirmationOptions) {
   }
 
   validateLiveRecipient(env, payload.to);
-  await confirmLiveExecution(env, payload.to, confirmationOptions);
-
   const missingCredentials = missingSettings(env, [
     'TWILIO_ACCOUNT_SID',
     'TWILIO_AUTH_TOKEN'
@@ -185,6 +183,7 @@ async function sendMessage(env, clientFactory, confirmationOptions) {
   const accountSid = settingValue(env.TWILIO_ACCOUNT_SID);
   const authToken = settingValue(env.TWILIO_AUTH_TOKEN);
   validateCredentials(accountSid, authToken);
+  await confirmLiveExecution(env, payload.to, confirmationOptions);
   const createClient = clientFactory || require('twilio');
   const client = createClient(accountSid, authToken, {
     autoRetry: false,

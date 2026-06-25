@@ -172,7 +172,28 @@ const invalidConfirmations = [
   [{ TWILIO_CONFIRM_TO: '+12025550125' }, /must match TWILIO_TO/]
 ];
 let confirmationFactoryCalls = 0;
-const confirmationChecks = invalidConfirmations.reduce((promise, confirmationCase) => {
+let credentialPromptCalls = 0;
+let credentialFactoryCalls = 0;
+const credentialPreflightChecks = sample.sendMessage(Object.assign({}, liveConfirmationBase, {
+  TWILIO_CONFIRM_TO: '+12025550123',
+  TWILIO_ACCOUNT_SID: 'not-an-account-sid'
+}), function() {
+  credentialFactoryCalls += 1;
+}, {
+  isInteractive: true,
+  promptRecipient: async function() {
+    credentialPromptCalls += 1;
+    return 'send 0123';
+  }
+}).then(() => {
+  assert.fail('malformed credentials must reject before prompting');
+}, (error) => {
+  assert(error instanceof sample.CredentialValidationError);
+  assert.strictEqual(error.message, 'TWILIO_ACCOUNT_SID has an invalid format.');
+  assert.strictEqual(credentialPromptCalls, 0);
+  assert.strictEqual(credentialFactoryCalls, 0);
+});
+const confirmationChecks = credentialPreflightChecks.then(() => invalidConfirmations.reduce((promise, confirmationCase) => {
   return promise.then(() => {
     const confirmationEnv = Object.assign({}, liveConfirmationBase, confirmationCase[0]);
     return sample.sendMessage(confirmationEnv, function() {
@@ -184,7 +205,7 @@ const confirmationChecks = invalidConfirmations.reduce((promise, confirmationCas
       assert.match(error.message, confirmationCase[1]);
     });
   });
-}, Promise.resolve()).then(() => {
+}, Promise.resolve())).then(() => {
   assert.strictEqual(confirmationFactoryCalls, 0);
   const confirmedEnv = Object.assign({}, liveConfirmationBase, {
     TWILIO_ALLOW_NONINTERACTIVE: 'true',

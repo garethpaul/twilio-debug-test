@@ -60,13 +60,6 @@ class CompanyComms:
             }
 
         validate_live_recipient(self.env, payload["to"])
-        confirm_live_execution(
-            self.env,
-            payload["to"],
-            self.input_stream,
-            self.prompt_reader,
-        )
-
         missing = [
             name for name in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN")
             if not setting_value(self.env.get(name))
@@ -79,6 +72,12 @@ class CompanyComms:
         account_sid = setting_value(self.env.get("TWILIO_ACCOUNT_SID"))
         auth_token = setting_value(self.env.get("TWILIO_AUTH_TOKEN"))
         validate_credentials(account_sid, auth_token)
+        confirm_live_execution(
+            self.env,
+            payload["to"],
+            self.input_stream,
+            self.prompt_reader,
+        )
 
         client_factory = self.client_factory
         if client_factory is None:

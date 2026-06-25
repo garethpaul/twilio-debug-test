@@ -30,6 +30,9 @@ LIVE_EXECUTION_CONFIRMATION_PLAN = (
     DOCS_PLANS / "2026-06-19-live-execution-confirmation.md"
 )
 MAKE_AUTHORITY_PLAN = DOCS_PLANS / "2026-06-21-make-authority-hardening.md"
+CREDENTIAL_PREFLIGHT_PLAN = (
+    DOCS_PLANS / "2026-06-25-credential-preflight-before-prompt.md"
+)
 
 
 class DocsPlansTest(unittest.TestCase):
@@ -52,6 +55,7 @@ class DocsPlansTest(unittest.TestCase):
         self.assertIn(PROVIDER_REQUEST_TIMEOUT_PLAN, plans)
         self.assertIn(LIVE_EXECUTION_CONFIRMATION_PLAN, plans)
         self.assertIn(MAKE_AUTHORITY_PLAN, plans)
+        self.assertIn(CREDENTIAL_PREFLIGHT_PLAN, plans)
 
         for plan in plans:
             text = plan.read_text(encoding="utf-8")
