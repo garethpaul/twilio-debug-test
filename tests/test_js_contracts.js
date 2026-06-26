@@ -92,7 +92,12 @@ assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: ' WARNING ' }), 'wa
 assert.strictEqual(sample.twilioLogLevel({ TWILIO_LOG_LEVEL: 'noisy' }), 'info');
 assert.strictEqual(typeof sample.runCli, 'function');
 assert.strictEqual(sample.MAX_MESSAGE_BODY_LENGTH, 1600);
+assert.strictEqual(sample.messageBodyUnits('😀'.repeat(800)), 1600);
 assert.strictEqual(sample.PROVIDER_REQUEST_TIMEOUT_MS, 30000);
+assert.ok(
+  fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
+    .includes('messageBodyUnits(payload.body) > MAX_MESSAGE_BODY_LENGTH')
+);
 assert.ok(
   fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
     .includes('client.logLevel = twilioLogLevel(env);')
@@ -114,6 +119,19 @@ assert.throws(
     TWILIO_FROM: '+12025550124',
     TWILIO_TO: '+12025550123',
     TWILIO_BODY: 'x'.repeat(sample.MAX_MESSAGE_BODY_LENGTH + 1)
+  }),
+  /1600 characters/
+);
+assert.strictEqual(sample.createMessagePayload({
+  TWILIO_FROM: '+12025550124',
+  TWILIO_TO: '+12025550123',
+  TWILIO_BODY: '😀'.repeat(800)
+}).body, '😀'.repeat(800));
+assert.throws(
+  () => sample.createMessagePayload({
+    TWILIO_FROM: '+12025550124',
+    TWILIO_TO: '+12025550123',
+    TWILIO_BODY: '😀'.repeat(801)
   }),
   /1600 characters/
 );

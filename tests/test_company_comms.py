@@ -212,6 +212,25 @@ class CompanyCommsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "1600 characters"):
             comms.send_msg()
 
+    def test_message_body_limit_counts_emoji_as_utf16_units(self):
+        sample = load_sample()
+        accepted = sample.CompanyComms(env={
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "😀" * 800,
+        }).send_msg()
+
+        self.assertEqual(sample.message_body_units("😀" * 800), 1600)
+        self.assertEqual(accepted["body_length"], 800)
+
+        rejected = sample.CompanyComms(env={
+            "TWILIO_TO": "+12025550123",
+            "TWILIO_FROM": "+12025550124",
+            "TWILIO_BODY": "😀" * 801,
+        })
+        with self.assertRaisesRegex(ValueError, "1600 characters"):
+            rejected.send_msg()
+
     def test_live_send_requires_credentials_before_importing_twilio(self):
         sample = load_sample()
         comms = sample.CompanyComms(env={

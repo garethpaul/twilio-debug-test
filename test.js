@@ -20,6 +20,10 @@ function settingValue(value) {
   return String(value).trim();
 }
 
+function messageBodyUnits(value) {
+  return value.length;
+}
+
 function shouldSendLive(env) {
   env = env || process.env;
   return settingValue(env.TWILIO_SEND_LIVE).toLowerCase() === 'true';
@@ -146,7 +150,7 @@ function createMessagePayload(env) {
   };
   validatePhone(payload.to, 'TWILIO_TO');
   validatePhone(payload.from, 'TWILIO_FROM');
-  if (payload.body.length > MAX_MESSAGE_BODY_LENGTH) {
+  if (messageBodyUnits(payload.body) > MAX_MESSAGE_BODY_LENGTH) {
     throw new MessageValidationError(
       'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH + ' characters or fewer.'
     );
@@ -221,6 +225,7 @@ module.exports = {
   CredentialValidationError,
   createMessagePayload,
   MAX_MESSAGE_BODY_LENGTH,
+  messageBodyUnits,
   MessageValidationError,
   PROVIDER_REQUEST_TIMEOUT_MS,
   redactPhone,
