@@ -117,7 +117,7 @@ class CompanyComms:
             )
         validate_phone(payload["to"], "TWILIO_TO")
         validate_phone(payload["from"], "TWILIO_FROM")
-        if len(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
+        if message_body_units(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
             raise MessageValidationError(
                 "Twilio message body must be %d characters or fewer."
                 % MAX_MESSAGE_BODY_LENGTH
@@ -142,6 +142,10 @@ def setting_value(value):
     if value is None:
         return ""
     return str(value).strip()
+
+
+def message_body_units(value):
+    return len(value.encode("utf-16-le", errors="surrogatepass")) // 2
 
 
 def message_setting(override, env, name):

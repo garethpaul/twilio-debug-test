@@ -1,5 +1,25 @@
 # Changes
 
+## 2026-06-26 - P2 - Align Unicode message length validation
+
+### Summary
+Python and Node.js now enforce the 1600-character provider boundary using the
+same UTF-16 code-unit semantics, including multi-unit emoji.
+
+### Work completed
+- Added explicit cross-runtime message-body unit helpers.
+- Added 800-emoji acceptance and 801-emoji rejection regressions.
+- Documented the provider boundary and preserved privacy-safe dry-run output.
+
+### Validation
+- Focused Python and Node.js message-body tests.
+- Canonical and external-directory `make check`.
+- Hostile mutations for Python code-point counting and Node helper bypass.
+
+### Bugs / findings
+- P2: Python previously admitted emoji-heavy bodies that Node.js and Twilio's
+  documented provider boundary could reject.
+
 ## 2026-06-25 08:08 PDT - P2 - Validate credentials before prompting
 
 ### Summary

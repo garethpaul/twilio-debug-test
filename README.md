@@ -179,8 +179,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
   message setting validation coverage.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard and editor metadata ignore coverage.
-- See `docs/plans/2026-06-09-message-body-length.md` for the shared message
-  body length guard.
+- See `docs/plans/2026-06-09-message-body-length.md` and
+  `docs/plans/2026-06-26-unicode-message-body-units.md` for the shared message
+  body length guard and cross-runtime UTF-16 unit boundary.
 - See `docs/plans/2026-06-10-ci-runtime-matrix.md` for the pinned hosted
   compatibility gate.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the fail-closed hosted workflow
