@@ -100,6 +100,10 @@ assert.ok(
 );
 assert.ok(
   fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
+    .includes('bodyLength: messageBodyUnits(payload.body)')
+);
+assert.ok(
+  fs.readFileSync(path.join(__dirname, '..', 'test.js'), 'utf8')
     .includes('client.logLevel = twilioLogLevel(env);')
 );
 assert.throws(
@@ -120,7 +124,7 @@ assert.throws(
     TWILIO_TO: '+12025550123',
     TWILIO_BODY: 'x'.repeat(sample.MAX_MESSAGE_BODY_LENGTH + 1)
   }),
-  /1600 characters/
+  /1600 UTF-16 code units/
 );
 assert.strictEqual(sample.createMessagePayload({
   TWILIO_FROM: '+12025550124',
@@ -133,7 +137,7 @@ assert.throws(
     TWILIO_TO: '+12025550123',
     TWILIO_BODY: '😀'.repeat(801)
   }),
-  /1600 characters/
+  /1600 UTF-16 code units/
 );
 assert.deepStrictEqual(sample.createMessagePayload({
   TWILIO_FROM: '  +12025550124  ',
@@ -250,6 +254,14 @@ confirmationChecks.then(() => sample.sendMessage(env)).then((result) => {
   assert.strictEqual(result.to, '********0123');
   assert.strictEqual(result.from, '********0124');
   assert.strictEqual(result.bodyLength, 15);
+  return sample.sendMessage({
+    TWILIO_TO: '+12025550123',
+    TWILIO_FROM: '+12025550124',
+    TWILIO_BODY: '😀'.repeat(800)
+  }).then((unicodeResult) => {
+    assert.strictEqual(unicodeResult.bodyLength, 1600);
+  });
+}).then(() => {
   let dryRunFactoryCalls = 0;
   return sample.sendMessage({
     TWILIO_ACCOUNT_SID: 'not-an-account-sid',

@@ -152,7 +152,8 @@ function createMessagePayload(env) {
   validatePhone(payload.from, 'TWILIO_FROM');
   if (messageBodyUnits(payload.body) > MAX_MESSAGE_BODY_LENGTH) {
     throw new MessageValidationError(
-      'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH + ' characters or fewer.'
+      'Twilio message body must be ' + MAX_MESSAGE_BODY_LENGTH +
+      ' UTF-16 code units or fewer.'
     );
   }
   return payload;
@@ -167,7 +168,7 @@ async function sendMessage(env, clientFactory, confirmationOptions) {
       dryRun: true,
       from: redactPhone(payload.from),
       to: redactPhone(payload.to),
-      bodyLength: payload.body.length
+      bodyLength: messageBodyUnits(payload.body)
     };
     console.log(JSON.stringify(result));
     return result;

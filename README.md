@@ -63,8 +63,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   both shapes are checked before Twilio client construction. This local shape
   check does not prove that credentials are active or authorized.
   Sender and recipient values must use E.164 form (`+` followed by 2-15 ASCII
-  digits with a nonzero first digit). Message bodies are limited to 1600
-  characters in both samples.
+  digits with a nonzero first digit). Message bodies are limited to 1600 UTF-16
+  code units in both samples.
+- Dry-run body length reports the same UTF-16 code units enforced by validation.
 - Python message arguments fall back to environment settings only when omitted;
   explicit blank recipients, senders, and bodies fail validation before dry-run
   output or live client setup.
@@ -182,6 +183,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-message-body-length.md` and
   `docs/plans/2026-06-26-unicode-message-body-units.md` for the shared message
   body length guard and cross-runtime UTF-16 unit boundary.
+- See `docs/plans/2026-06-27-dry-run-body-unit-reporting.md` for aligned
+  privacy-safe dry-run length metadata.
 - See `docs/plans/2026-06-10-ci-runtime-matrix.md` for the pinned hosted
   compatibility gate.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the fail-closed hosted workflow

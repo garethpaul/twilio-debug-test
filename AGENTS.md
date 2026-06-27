@@ -44,6 +44,7 @@
 
 - Detected references to Twilio. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Live-send credential validation completes before interactive execution confirmation.
+- Dry-run body length reports the same UTF-16 code units enforced by validation.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-python-log-level-opt-in.md` for Python live-send log-level opt-in coverage.

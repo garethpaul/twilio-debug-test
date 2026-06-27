@@ -56,7 +56,7 @@ class CompanyComms:
                 "dry_run": True,
                 "to": redact_phone(payload["to"]),
                 "from": redact_phone(payload["from"]),
-                "body_length": len(payload["body"]),
+                "body_length": message_body_units(payload["body"]),
             }
 
         validate_live_recipient(self.env, payload["to"])
@@ -119,7 +119,7 @@ class CompanyComms:
         validate_phone(payload["from"], "TWILIO_FROM")
         if message_body_units(payload["body"]) > MAX_MESSAGE_BODY_LENGTH:
             raise MessageValidationError(
-                "Twilio message body must be %d characters or fewer."
+                "Twilio message body must be %d UTF-16 code units or fewer."
                 % MAX_MESSAGE_BODY_LENGTH
             )
         return payload
