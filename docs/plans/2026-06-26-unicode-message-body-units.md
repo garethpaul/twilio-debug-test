@@ -17,8 +17,10 @@ body that Node.js and the provider would reject.
   two, using surrogate-pass behavior to match JavaScript string semantics.
 - Route Node.js validation through an explicit helper even though native string
   length already has the required semantics.
-- Keep dry-run `body_length` output unchanged as a privacy-safe Python code-point
-  count; it is descriptive output, not the provider validation boundary.
+- The initial rollout kept Python dry-run `body_length` as a code-point count.
+  That reporting choice is superseded by
+  `2026-06-27-dry-run-body-unit-reporting.md`; both runtimes now report the same
+  UTF-16 units they validate.
 
 ## Verification
 

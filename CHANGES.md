@@ -1,5 +1,50 @@
 # Changes
 
+## 2026-06-27 - P2 - Align dry-run body unit reporting
+
+### Summary
+
+Made Python and Node.js dry-run length metadata report the same UTF-16 code
+units enforced by the shared 1600-unit validation boundary.
+
+### Work completed
+
+- Reused `message_body_units` for Python dry-run results.
+- Reused `messageBodyUnits` for Node.js dry-run results.
+- Added cross-runtime 800-emoji metadata regressions and source contracts.
+- Made oversized-body errors name the actual UTF-16 code-unit boundary.
+- Dry-run body length reports the same UTF-16 code units enforced by validation.
+
+### Validation
+
+- Focused Python test failed at `800 != 1600` before implementation.
+- Node.js helper-use contract failed before its dry-run path was aligned.
+- Cross-runtime rejection-message tests failed while errors still said
+  `characters` instead of `UTF-16 code units`.
+- All 34 Python tests and the Node.js contract suite passed.
+- Python and Node.js raw-length mutations were rejected by file-bound baseline
+  contracts.
+- Repository and external-directory `make check` passed Make authority tests,
+  exact package contracts, `npm audit`, `pip check`, and `pip-audit` with no
+  known vulnerabilities.
+- Python/shell syntax and `git diff --check` passed.
+- Push run `28273518631` and pull-request run `28273519694` passed all
+  Python/Node runtime matrices and CodeQL jobs on the implementation head
+  before this evidence-only documentation amendment.
+- `codex review --base main` was attempted on the implementation head but
+  stopped before analysis because the OpenAI API returned HTTP 401; immutable
+  manual review of the exact diff found no actionable issues.
+
+### Bugs / findings
+
+- P2: Python dry-run metadata disagreed with both its own validation boundary
+  and Node.js for non-BMP Unicode text.
+
+### Next action
+
+- Re-run the full gate and required review attempt, then merge only after the
+  replacement evidence-only PR head passes hosted checks.
+
 ## 2026-06-26 - P2 - Align Unicode message length validation
 
 ### Summary

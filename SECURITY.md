@@ -45,6 +45,7 @@ Helpful reports include:
   falling back to an environment recipient, sender, or body.
 - Python and Node.js sender and recipient settings must pass the shared E.164
   shape check before dry-run output or live Twilio client construction.
+- Dry-run body length reports the same UTF-16 code units enforced by validation.
 - Live mode must require a separate E.164 `TWILIO_CONFIRM_TO` value that matches
   the normalized `TWILIO_TO` recipient before credential or client setup.
 - Interactive live sends require a per-invocation confirmation phrase that

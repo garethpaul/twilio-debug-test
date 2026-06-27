@@ -27,6 +27,7 @@ Priority:
 - Bound Python and Node provider requests without enabling duplicate-prone
   automatic retries
 - Bound sample message bodies before dry-run output or live send setup
+- Dry-run body length reports the same UTF-16 code units enforced by validation.
 - Report expected sample setup errors without tracebacks
 - Keep CLI validation errors testable across language samples
 - Keep a scriptable baseline guard for required files and maintenance metadata

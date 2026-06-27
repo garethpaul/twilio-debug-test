@@ -48,11 +48,37 @@ for path in \
   "docs/plans/2026-06-14-codeql-analysis.md" \
   "docs/plans/2026-06-21-make-authority-hardening.md" \
   "docs/plans/2026-06-25-credential-preflight-before-prompt.md" \
+  "docs/plans/2026-06-27-dry-run-body-unit-reporting.md" \
   "scripts/check-node-package.js" \
   "scripts/test-makefile-authority.sh" \
   "scripts/check-python-package.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+if ! grep -Fq -- '"body_length": message_body_units(payload["body"])' "$ROOT_DIR/test.py"; then
+  printf '%s\n' 'Python dry-run results must report message_body_units(payload["body"]).' >&2
+  exit 1
+fi
+if ! grep -Fq -- 'bodyLength: messageBodyUnits(payload.body)' "$ROOT_DIR/test.js"; then
+  printf '%s\n' 'Node.js dry-run results must report messageBodyUnits(payload.body).' >&2
+  exit 1
+fi
+if ! grep -Fq -- 'self.assertEqual(accepted["body_length"], 1600)' "$ROOT_DIR/tests/test_company_comms.py"; then
+  printf '%s\n' 'Python tests must pin emoji dry-run metadata to 1600 UTF-16 units.' >&2
+  exit 1
+fi
+if ! grep -Fq -- 'assert.strictEqual(unicodeResult.bodyLength, 1600)' "$ROOT_DIR/tests/test_js_contracts.js"; then
+  printf '%s\n' 'Node.js tests must pin emoji dry-run metadata to 1600 UTF-16 units.' >&2
+  exit 1
+fi
+
+dry_run_unit_guidance='Dry-run body length reports the same UTF-16 code units enforced by validation.'
+for dry_run_unit_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq -- "$dry_run_unit_guidance" "$ROOT_DIR/$dry_run_unit_doc"; then
+    printf '%s\n' "$dry_run_unit_doc must document dry-run UTF-16 body-unit reporting." >&2
+    exit 1
+  fi
 done
 
 for credential_contract in \
